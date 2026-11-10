@@ -1,0 +1,25 @@
+<!DOCTYPE html>
+<html>
+<head>
+    <title>WebGL Test</title>
+</head>
+<body style="margin:0; background: #070b1e; color: white;">
+    <h1 id="status">Testing WebGL...</h1>
+    <canvas id="c"></canvas>
+    <script type="module">
+        import * as THREE from 'https://cdn.jsdelivr.net/npm/three@0.187.0/build/three.module.js';
+        const scene = new THREE.Scene();
+        const camera = new THREE.PerspectiveCamera(60, 800/600, 0.1, 100);
+        camera.position.set(0, 2, 5);
+        camera.lookAt(0, 0, 0);
+        const renderer = new THREE.WebGLRenderer({ canvas: document.getElementById('c') });
+        renderer.setSize(800, 600);
+        const geo = new THREE.BoxGeometry(1, 1, 1);
+        const mat = new THREE.MeshBasicMaterial({ color: 0x00ff00 });
+        const mesh = new THREE.Mesh(geo, mat);
+        scene.add(mesh);
+        renderer.render(scene, camera);
+        document.getElementById('status').innerText = 'WebGL Render OK: ' + !!renderer.getContext();
+    </script>
+</body>
+</html>
