@@ -1,0 +1,21 @@
+Earth textures bundled from the official Three.js examples:
+
+Local file: earth-atmos-2048.jpg
+Source: https://raw.githubusercontent.com/mrdoob/three.js/dev/examples/textures/planets/earth_atmos_2048.jpg
+2048 x 1024 Earth daytime surface map.
+
+Local file: earth-lights-2048.png
+Source: https://raw.githubusercontent.com/mrdoob/three.js/dev/examples/textures/planets/earth_lights_2048.png
+2048 x 1024 nighttime Earth image with real city-light distributions.
+
+Local file: earth-clouds-1024.png
+Source: https://raw.githubusercontent.com/mrdoob/three.js/dev/examples/textures/planets/earth_clouds_1024.png
+1024 x 512 separate cloud coverage image with an embedded transparency table.
+Browser decoding preserves its alpha channel (0-255); use that cloud alpha.
+
+Upstream project and license:
+https://github.com/mrdoob/three.js
+https://github.com/mrdoob/three.js/blob/dev/LICENSE
+
+Retrieved via HTTPS with certificate verification enabled.
+All textures are served locally; no image CDN request is needed at runtime.

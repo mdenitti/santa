@@ -108,6 +108,7 @@
             gap: 12px;
             z-index: 20;
         }
+        body.intro-finished #btn-skip-intro { display: none; }
         #btn-toggle-sound {
             opacity: 1;
             transition: opacity 0.3s ease, background 0.25s ease, border-color 0.25s ease, transform 0.25s ease;
@@ -166,8 +167,8 @@
         /* Debug overlay */
         #debug-overlay {
             position: absolute;
-            top: 12px;
-            left: 12px;
+            top: 160px;
+            left: 24px;
             background: rgba(7, 11, 30, 0.85);
             border: 1px solid rgba(58, 214, 255, 0.4);
             padding: 8px 14px;
@@ -195,6 +196,44 @@
             text-align: center;
             max-width: 400px;
         }
+        /* Village navigation stays usable on touch screens and during the intro. */
+        #village-heading { position:absolute; top:38px; left:40px; pointer-events:none; text-shadow:0 2px 18px #06101e; }
+        .eyebrow { font-size:10px; letter-spacing:.25em; color:#c5d9d9; }
+        #village-heading h2 { font:italic 42px Georgia,serif; margin-top:10px; font-weight:normal; }
+        #village-heading h2 span { display:inline-block; font:12px Georgia,serif; vertical-align:top; margin:8px 0 0 12px; color:#e1bb7c; }
+        #village-heading p { font:italic 15px Georgia,serif; color:#c1d0d9; margin-top:8px; }
+        #explore-panel { position:absolute; bottom:24px; left:24px; max-width:calc(100% - 48px); padding:17px 20px; border:1px solid #e6c79138; border-radius:16px; background:linear-gradient(120deg,#112b30ed,#0b1728ed); backdrop-filter:blur(18px); box-shadow:0 8px 40px #0004; }
+        .explore-topline { display:flex; align-items:center; gap:9px; font:15px Georgia,serif; color:#f6e3c2; margin-bottom:12px; }
+        .live-dot { width:6px; height:6px; border-radius:50%; background:#a8dfbd; box-shadow:0 0 10px #a8dfbd99; }
+        .explore-buttons { display:flex; flex-wrap:wrap; gap:7px; }
+        #explore-panel .btn { border-radius:7px; padding:9px 12px; font-size:12px; background:#ffffff08; border-color:#e6c79138; }
+        #explore-panel .btn[aria-pressed="true"] { background:#e8cd9b; border-color:#e8cd9b; color:#172b2c; }
+        .btn:focus-visible, #touch-controls button:focus-visible { outline:2px solid #f5dba8; outline-offset:4px; }
+        #party-status { margin-top:10px; font-size:11px; color:#f0c8ee; line-height:1.5; }
+        body[data-party="on"] #explore-panel { border-color:#d9a6e9; box-shadow:0 0 28px #bd76c322; }
+        #explore-panel #btn-party[aria-pressed="true"] { background:#ddbaeb; border-color:#ddbaeb; }
+        #explore-instructions { font-size:11px; line-height:1.6; color:#bdcbd1; margin-top:11px; max-width:580px; }
+        #hint-text { display:none; }
+        #hud-controls { top:24px; bottom:auto; right:24px; gap:6px; flex-wrap:wrap; justify-content:flex-end; max-width:45%; }
+        #hud-controls .btn { font-size:11px; padding:8px 11px; background:#0b1e2ac9; border-color:#e6c79138; }
+        #touch-controls { display:none; position:absolute; right:20px; bottom:calc(var(--explore-panel-height, 160px) + 32px); text-align:center; touch-action:none; }
+        #touch-controls button { width:44px; height:44px; margin:3px; border-radius:10px; border:1px solid #e6c79155; color:#ffe4b6; background:#112b30dd; font-size:18px; touch-action:none; }
+        #touch-controls .flight-touch { display:none; }
+        body[data-explore-mode="fly"] #touch-controls .flight-touch { display:block; }
+        .flight-touch button { font-size:11px !important; }
+        @media (pointer:coarse) { body[data-explore-mode="walk"] #touch-controls, body[data-explore-mode="santa"] #touch-controls, body[data-explore-mode="fly"] #touch-controls { display:block; } }
+        @media (max-width:650px) {
+            #village-heading { top:24px; left:20px; } #village-heading h2 { font-size:30px; }
+            .eyebrow { font-size:8px; letter-spacing:.13em; } #village-heading p { font-size:12px; }
+            #hud-controls { top:120px; right:14px; max-width:95%; }
+            #explore-panel { left:12px; bottom:12px; max-width:calc(100% - 24px); padding:13px; }
+            #explore-panel .btn { padding:10px 9px; font-size:11px; } #explore-instructions { font-size:10px; }
+            #debug-overlay { top:180px; }
+        }
+        @media (prefers-reduced-motion:reduce) { *, *::before, *::after { scroll-behavior:auto !important; transition:none !important; } }
+        body[data-intro-stage="orbit"] #village-heading,
+        body[data-intro-stage="orbit"] #explore-panel,
+        body[data-intro-stage="orbit"] #touch-controls { visibility: hidden; }
     </style>
 
     <script type="importmap">
@@ -205,7 +244,7 @@
     </script>
 </head>
 <body>
-    <div id="fade-overlay"></div>
+    <div id="fade-overlay"><div style="position:absolute;inset:0;display:grid;place-content:center;text-align:center;gap:12px"><span style="font:italic 30px Georgia;color:#f5d9ad">Het winterdorp</span><span style="font-size:12px;letter-spacing:.12em;color:#b7c6d9">De lichtjes worden aangestoken…</span></div></div>
     <canvas id="webgl-canvas"></canvas>
 
     <div id="ui-container">
@@ -214,12 +253,37 @@
 
         <div id="intro-title">
             <h1>Noordpool</h1>
-            <p>90° N · Het Voxel-Diorama</p>
+            <p>90° N · Het betoverde winterdorp</p>
         </div>
 
+        <div id="village-heading">
+            <span class="eyebrow">EEN KERSTAVOND AAN DE NOORDPOOL</span>
+            <h2>Het winterdorp<span>90° N</span></h2>
+            <p>Waar het licht nooit uitgaat.</p>
+        </div>
+        <div id="explore-panel" class="interactive-ui" aria-label="Verken het winterdorp">
+            <div class="explore-topline"><span class="live-dot"></span><span id="explore-status" role="status">Het winterdorp · 90° N</span></div>
+            <div class="explore-buttons">
+                <button class="btn" data-mode="overview" aria-pressed="true">Overzicht</button>
+                <button id="btn-walk" class="btn" data-mode="walk" aria-pressed="false">POV wandeling</button>
+                <button id="btn-santa" class="btn" data-mode="santa" aria-pressed="false">Bestuur Santa</button>
+                <button id="btn-fly" class="btn" data-mode="fly" aria-pressed="false">Vlieg met de slee</button>
+                <button id="btn-party" class="btn" aria-pressed="false">25 dec · Feestmodus</button>
+                <button id="btn-party-street" class="btn" hidden>Bekijk feeststraat</button>
+                <button id="btn-tour-pause" class="btn" hidden>Pauzeer wandeling</button>
+            </div>
+            <p id="party-status" role="status" hidden>36 extra feestvierders · vuurwerk · feestmuziek · Sterrenstraat</p>
+            <p id="explore-instructions">Sleep om rond te kijken · Scroll om in te zoomen</p>
+        </div>
+        <div id="touch-controls" class="interactive-ui" aria-label="Bewegingsbediening">
+            <button data-key="KeyW" aria-label="Vooruit">↑</button>
+            <div><button data-key="KeyA" aria-label="Links">←</button><button data-key="KeyS" aria-label="Achteruit">↓</button><button data-key="KeyD" aria-label="Rechts">→</button></div>
+            <div class="flight-touch"><button data-key="Space">Stijg</button><button data-key="ShiftLeft">Daal</button></div>
+        </div>
         <div id="hint-text">Draai rond met muis of vinger · Klik op de werkplaats of het cadeau</div>
 
         <div id="hud-controls" class="interactive-ui">
+            <button id="btn-skip-intro" class="btn">Sla intro over</button>
             <button id="btn-toggle-sound" class="btn">Geluid: Aan</button>
             <button id="btn-toggle-view" class="btn">Kijk binnen</button>
             <button id="btn-replay-intro" class="btn">Intro opnieuw</button>
@@ -241,9 +305,15 @@
     <script type="module">
         import * as THREE from 'three';
         import { Timer } from 'three';
+        import { createVillage } from './village.js';
+        import { IntroMusic } from './intro-music.js';
+        import { createPartyMode } from './party-mode.js';
+        import { meshMicroVoxels } from './microvoxels.js';
+        import { createSpaceIntro, INTRO_DURATION } from './space-intro.js';
         import { OrbitControls } from 'three/addons/controls/OrbitControls.js';
         import { EffectComposer } from 'three/addons/postprocessing/EffectComposer.js';
         import { RenderPass } from 'three/addons/postprocessing/RenderPass.js';
+        import { SSAOPass } from 'three/addons/postprocessing/SSAOPass.js';
         import { UnrealBloomPass } from 'three/addons/postprocessing/UnrealBloomPass.js';
         import { OutputPass } from 'three/addons/postprocessing/OutputPass.js';
 
@@ -285,7 +355,9 @@
         const urlParams = new URLSearchParams(window.location.search);
         const IS_DEBUG = urlParams.has('debug');
         const SKIP_INTRO = urlParams.get('intro') === '0';
-        const FROZEN_T = urlParams.has('t') ? parseFloat(urlParams.get('t')) : null;
+        const FROZEN_T = urlParams.has('t') && Number.isFinite(Number(urlParams.get('t'))) ? Number(urlParams.get('t')) : null;
+        let frozenIntroActive = FROZEN_T !== null;
+        let frozenIntroTime = FROZEN_T;
         const INITIAL_VIEW = urlParams.get('view') || 'buiten';
         const INITIAL_GIFT = urlParams.get('gift') === 'open';
 
@@ -415,50 +487,10 @@
                 const scaleVec = new THREE.Vector3(this.voxelScale, this.voxelScale, this.voxelScale);
 
                 if (standardVoxels.length > 0) {
-                    const mat = new THREE.MeshStandardMaterial({
-                        roughness: 0.82,
-                        metalness: 0.05,
-                        ...materialOptions
-                    });
-                    applyVoxelEdgeShader(mat);
-
-                    const mesh = new THREE.InstancedMesh(sharedBoxGeometry, mat, standardVoxels.length);
-                    mesh.castShadow = true;
-                    mesh.receiveShadow = true;
-
-                    for (let i = 0; i < standardVoxels.length; i++) {
-                        const v = standardVoxels[i];
-                        dummy.position.set(v.x * step, v.y * step, v.z * step);
-                        dummy.scale.copy(scaleVec);
-                        dummy.updateMatrix();
-                        mesh.setMatrixAt(i, dummy.matrix);
-
-                        // Rijkere Ambient Occlusion en zachte contact shadow nuances
-                        let neighborCount = 0;
-                        let bottomNeighbors = 0;
-                        for (let dx = -1; dx <= 1; dx++) {
-                            for (let dy = -1; dy <= 1; dy++) {
-                                for (let dz = -1; dz <= 1; dz++) {
-                                    if (dx === 0 && dy === 0 && dz === 0) continue;
-                                    if (this.has(v.x + dx, v.y + dy, v.z + dz)) {
-                                        neighborCount++;
-                                        if (dy < 0) bottomNeighbors++;
-                                    }
-                                }
-                            }
-                        }
-                        const contactShade = (bottomNeighbors > 0 || v.y <= 0) ? 0.90 : 1.0;
-                        const aoFactor = Math.max(0.60, (1.0 - (neighborCount / 26) * 0.44) * contactShade);
-                        const tintVariation = 1.0 + (prng() - 0.5) * 0.07;
-
-                        tempColor.setHex(v.colorHex);
-                        tempColor.multiplyScalar(aoFactor * tintVariation);
-                        mesh.setColorAt(i, tempColor);
-                    }
-
-                    mesh.instanceMatrix.needsUpdate = true;
-                    if (mesh.instanceColor) mesh.instanceColor.needsUpdate = true;
-                    group.add(mesh);
+                    group.add(meshMicroVoxels(standardVoxels, {
+                        step, has: (x, y, z) => this.has(x, y, z), materialOptions,
+                        divisions: 4
+                    }));
                 }
 
                 if (emissiveVoxels.length > 0) {
@@ -564,7 +596,7 @@
         renderer.setSize(window.innerWidth, window.innerHeight);
         renderer.setPixelRatio(Math.min(window.devicePixelRatio, 2));
         renderer.toneMapping = THREE.ACESFilmicToneMapping;
-        renderer.toneMappingExposure = 0.98;
+        renderer.toneMappingExposure = 0.85;
 
         renderer.shadowMap.enabled = true;
         renderer.shadowMap.type = THREE.PCFSoftShadowMap;
@@ -575,11 +607,11 @@
 
         const scene = new THREE.Scene();
         scene.background = new THREE.Color(PALETTE.NIGHT_DARK);
-        scene.fog = new THREE.FogExp2(PALETTE.NIGHT_DARK, 0.0135);
+        scene.fog = new THREE.FogExp2(0x19213b, 0.0045);
 
-        const camera = new THREE.PerspectiveCamera(46, window.innerWidth / window.innerHeight, 0.2, 350);
-        const FINAL_CAM_POS = new THREE.Vector3(26, 17, 30);
-        const FINAL_CAM_TARGET = new THREE.Vector3(2, 3.5, 0);
+        const camera = new THREE.PerspectiveCamera(46, window.innerWidth / window.innerHeight, 0.15, 450);
+        const FINAL_CAM_POS = new THREE.Vector3(100, 80, 118);
+        const FINAL_CAM_TARGET = new THREE.Vector3(-5, 2, 8);
         camera.position.copy(FINAL_CAM_POS);
 
         const controls = new OrbitControls(camera, renderer.domElement);
@@ -587,7 +619,7 @@
         controls.dampingFactor = 0.05;
         controls.maxPolarAngle = Math.PI / 2 - 0.03;
         controls.minDistance = 5;
-        controls.maxDistance = 80;
+        controls.maxDistance = 210;
         controls.target.copy(FINAL_CAM_TARGET);
 
         let lastUserInteractionTime = performance.now();
@@ -603,12 +635,21 @@
         const composer = new EffectComposer(renderer);
         const renderPass = new RenderPass(scene, camera);
         composer.addPass(renderPass);
+        const ambientPass = new SSAOPass(scene, camera, window.innerWidth / 2, window.innerHeight / 2, 16);
+        ambientPass.kernelRadius = 1.6;
+        ambientPass.minDistance = .001;
+        ambientPass.maxDistance = .035;
+        composer.addPass(ambientPass);
+        const resizeAmbient = () => ambientPass.setSize(Math.ceil(window.innerWidth / 2), Math.ceil(window.innerHeight / 2));
+        resizeAmbient();
+        const spaceIntro = createSpaceIntro({ camera, renderPass, villageScene: scene });
+        window.__introDiagnostics = spaceIntro.diagnostics;
 
         const bloomPass = new UnrealBloomPass(
             new THREE.Vector2(window.innerWidth, window.innerHeight),
-            1.25,
             0.45,
-            1.05
+            0.4,
+            1.2
         );
         composer.addPass(bloomPass);
 
@@ -623,14 +664,14 @@
             const group = new THREE.Group();
 
             // 1. Koel maanlicht met zachte diffuse schaduwen
-            const moonLight = new THREE.DirectionalLight(0xd4e5ff, 1.35);
-            moonLight.position.set(38, 55, 32);
+            const moonLight = new THREE.DirectionalLight(0xded9ff, 1.1);
+            moonLight.position.set(45, 85, 40);
             moonLight.castShadow = true;
             moonLight.shadow.mapSize.width = config.shadowMapSize;
             moonLight.shadow.mapSize.height = config.shadowMapSize;
             moonLight.shadow.camera.near = 10;
-            moonLight.shadow.camera.far = 130;
-            const sh = 34;
+            moonLight.shadow.camera.far = 280;
+            const sh = 120;
             moonLight.shadow.camera.left = -sh;
             moonLight.shadow.camera.right = sh;
             moonLight.shadow.camera.top = sh;
@@ -641,7 +682,7 @@
             group.add(moonLight);
 
             // 2. Rijk hemisfeer omgevingslicht dat meeademt met het noorderlicht
-            const hemiLight = new THREE.HemisphereLight(0x70d8ff, 0x121e38, 0.52);
+            const hemiLight = new THREE.HemisphereLight(0xb6d8ff, 0x342a43, 0.68);
             group.add(hemiLight);
 
             // 3. Warme gloed binnen in de werkplaats
@@ -763,6 +804,8 @@
             const group = new THREE.Group();
             const skyGeo = new THREE.SphereGeometry(260, 32, 16);
             const skyMat = new THREE.ShaderMaterial({
+                uniforms: { introReveal: { value: 1 } },
+                transparent: true,
                 side: THREE.BackSide,
                 depthWrite: false,
                 vertexShader: `
@@ -774,6 +817,7 @@
                     }
                 `,
                 fragmentShader: `
+                    uniform float introReveal;
                     varying vec3 vWorldPosition;
                     void main() {
                         vec3 dir = normalize(vWorldPosition);
@@ -781,7 +825,7 @@
                         vec3 horizonCol = vec3(0.027, 0.043, 0.118);
                         vec3 zenithCol  = vec3(0.012, 0.019, 0.055);
                         vec3 col = mix(horizonCol, zenithCol, pow(h, 0.6));
-                        gl_FragColor = vec4(col, 1.0);
+                        gl_FragColor = vec4(col, introReveal);
                     }
                 `
             });
@@ -914,7 +958,7 @@
                 depthWrite: false,
                 side: THREE.DoubleSide,
                 blending: THREE.AdditiveBlending,
-                uniforms: { uTime: { value: 0 } },
+                uniforms: { uTime: { value: 0 }, introReveal: { value: 1 } },
                 vertexShader: `
                     uniform float uTime;
                     varying vec2 vUv;
@@ -927,6 +971,7 @@
                         float wave1 = sin(pos.x * 0.04 + uTime * 0.3) * 4.5;
                         float wave2 = cos(pos.x * 0.08 - uTime * 0.2) * 2.5;
                         pos.z += (wave1 + wave2) * smoothstep(0.0, 1.0, uv.y);
+                        pos.y += (sin(pos.x * .047 + uTime * .13) * 7.0 + cos(pos.x * .105 - uTime * .17) * 3.0) * (.4 + uv.y);
 
                         vec4 worldPos = modelMatrix * vec4(pos, 1.0);
                         vWorldPos = worldPos.xyz;
@@ -935,6 +980,7 @@
                 `,
                 fragmentShader: `
                     uniform float uTime;
+                    uniform float introReveal;
                     varying vec2 vUv;
 
                     void main() {
@@ -942,17 +988,18 @@
                         float rays2 = cos(vUv.x * 45.0 - uTime * 0.5);
                         float beam = pow(abs(rays1 * 0.7 + rays2 * 0.3), 2.2) * 0.6 + 0.4;
 
-                        vec3 colGreen  = vec3(0.36, 1.0, 0.69);
-                        vec3 colCyan   = vec3(0.23, 0.84, 1.0);
-                        vec3 colPurple = vec3(0.69, 0.42, 1.0);
+                        vec3 colGreen  = vec3(0.12, 0.95, 0.45);
+                        vec3 colCyan   = vec3(0.12, 0.70, 0.83);
+                        vec3 colPurple = vec3(0.50, 0.22, 0.85);
 
-                        vec3 color = mix(colGreen, colCyan, smoothstep(0.05, 0.45, vUv.y));
-                        color = mix(color, colPurple, smoothstep(0.45, 0.85, vUv.y));
+                        vec3 color = mix(colGreen, colCyan, smoothstep(0.25, 0.65, vUv.y));
+                        color = mix(color, colPurple, smoothstep(0.70, 0.95, vUv.y));
 
-                        float envelope = smoothstep(0.0, 0.22, vUv.y) * smoothstep(1.0, 0.65, vUv.y);
-                        float alpha = envelope * beam * 0.6;
+                        float envelope = smoothstep(0.0, 0.16, vUv.y) * (1.0 - smoothstep(0.6, 1.0, vUv.y));
+                        float edges = smoothstep(0.0, 0.16, vUv.x) * (1.0 - smoothstep(0.84, 1.0, vUv.x));
+                        float alpha = envelope * edges * beam * 0.38;
 
-                        gl_FragColor = vec4(color * (1.15 + beam * 0.6), alpha);
+                        gl_FragColor = vec4(color * (0.65 + beam * 0.2), alpha * introReveal);
                     }
                 `
             });
@@ -976,7 +1023,8 @@
                 geo.computeVertexNormals();
 
                 const mesh = new THREE.Mesh(geo, auroraMat);
-                mesh.position.set(-15, cfg.y, -35);
+                mesh.renderOrder = 4;
+                mesh.position.set(-15, cfg.y + 25, -115);
                 mesh.rotation.y = cfg.rot;
                 group.add(mesh);
             });
@@ -997,7 +1045,7 @@
             const sizes = new Float32Array(count);
             const phases = new Float32Array(count);
 
-            const BOX_W = 80;
+            const BOX_W = 180;
             const BOX_H = 45;
 
             for (let i = 0; i < count; i++) {
@@ -1006,7 +1054,7 @@
                 positions[i * 3 + 2] = (prng() - 0.5) * BOX_W;
 
                 speeds[i] = 3.5 + prng() * 4.5;
-                sizes[i] = 2.0 + prng() * 3.0;
+                sizes[i] = 1.0 + prng() * 1.7;
                 phases[i] = prng() * Math.PI * 2;
             }
 
@@ -1032,10 +1080,10 @@
                         pos.y = mod(pos.y - uTime * aSpeed, 45.0);
 
                         pos.x += sin(uTime * 0.7 + aPhase + pos.y * 0.12) * 1.5 + uTime * 0.8;
-                        pos.x = mod(pos.x + 40.0, 80.0) - 40.0;
+                        pos.x = mod(pos.x + 90.0, 180.0) - 90.0;
 
                         pos.z += cos(uTime * 0.5 + aPhase + pos.y * 0.08) * 1.2;
-                        pos.z = mod(pos.z + 40.0, 80.0) - 40.0;
+                        pos.z = mod(pos.z + 90.0, 180.0) - 90.0;
 
                         vec4 mvPos = modelViewMatrix * vec4(pos, 1.0);
                         float sz = aSize * (150.0 / -mvPos.z);
@@ -2418,30 +2466,14 @@
         scene.add(aurora);
         animatedObjects.push(aurora);
 
-        const groundBuilder = new VoxelBuilder();
-        const ground = createGround(groundBuilder, CONFIG);
-        scene.add(ground);
+        // Continuous snow terrain is provided by the village, with no coarse
+        // diorama blocks or hidden height steps on pedestrian streets.
 
         const poleBuilder = new VoxelBuilder();
         const pole = createPole(poleBuilder, CONFIG);
         scene.add(pole);
 
-        // 5 feestelijke bomen op open posities rond het diorama
-        const treeConfigs = [
-            { pos: [-22, 0, 8],   variant: 0 },
-            { pos: [-26, 0, -10], variant: 1 },
-            { pos: [-14, 0, -22], variant: 2 },
-            { pos: [-16, 0, 24],  variant: 3 },
-            { pos: [30, 0, -14],  variant: 4 }
-        ];
-
-        treeConfigs.forEach((tc) => {
-            const tb = new VoxelBuilder();
-            const tree = createTree(tb, tc.variant, CONFIG);
-            tree.position.set(tc.pos[0] * CONFIG.voxelSize, tc.pos[1], tc.pos[2] * CONFIG.voxelSize);
-            scene.add(tree);
-            animatedObjects.push(tree);
-        });
+        // All trees now come from the detailed conifer forest in village.js.
 
         // Werkplaats
         const workshop = createWorkshop(CONFIG);
@@ -2474,7 +2506,7 @@
         const pointer = new THREE.Vector2();
         let pointerDownPos = { x: 0, y: 0 };
 
-        let cameraState = (SKIP_INTRO || INITIAL_VIEW === 'binnen' || FROZEN_T !== null) ?
+        let cameraState = (SKIP_INTRO || INITIAL_VIEW === 'binnen') ?
                           (INITIAL_VIEW === 'binnen' ? 'binnen' : 'buiten') : 'intro';
         let transitionProgress = 0.0;
         const CAM_TRANSITION_DURATION = 2.5;
@@ -2485,6 +2517,7 @@
         const insideCamTarget = new THREE.Vector3(16 * CONFIG.voxelSize, 3.5 * CONFIG.voxelSize, -12 * CONFIG.voxelSize);
 
         function toggleInsideOutsideView() {
+            if (village.mode !== 'overview') village.setMode('overview');
             if (cameraState === 'buiten') {
                 cameraState = 'naar_binnen';
                 transitionProgress = 0.0;
@@ -2505,10 +2538,11 @@
         document.getElementById('btn-toggle-view').addEventListener('click', toggleInsideOutsideView);
 
         window.addEventListener('keydown', (e) => {
+            if (village.mode !== 'overview') return;
             if (e.key === 'w' || e.key === 'W') {
                 toggleInsideOutsideView();
             } else if (e.key === ' ' || e.key === 'Escape') {
-                if (cameraState === 'intro') skipIntro();
+                if (cameraState === 'intro' || frozenIntroActive) skipIntro();
             }
         });
 
@@ -2521,7 +2555,7 @@
             pointer.x = (e.clientX / window.innerWidth) * 2 - 1;
             pointer.y = -(e.clientY / window.innerHeight) * 2 + 1;
 
-            if (cameraState === 'intro') return;
+            if (cameraState === 'intro' || village.mode !== 'overview') return;
 
             raycaster.setFromCamera(pointer, camera);
             const intersects = raycaster.intersectObjects([gift, workshop], true);
@@ -2549,6 +2583,7 @@
         });
 
         window.addEventListener('pointerup', (e) => {
+            if (village.mode !== 'overview') return;
             if (e.target && (e.target.closest('#hud-controls') || e.target.closest('.interactive-ui') || e.target.tagName === 'BUTTON')) {
                 return;
             }
@@ -2557,7 +2592,7 @@
 
             // Strikte 5-pixel tolerantie: slepen met OrbitControls triggert nooit een klik
             if (dx < 5 && dy < 5) {
-                if (cameraState === 'intro') {
+                if (cameraState === 'intro' || frozenIntroActive) {
                     skipIntro();
                     return;
                 }
@@ -2583,6 +2618,7 @@
             camera.updateProjectionMatrix();
             renderer.setSize(window.innerWidth, window.innerHeight);
             composer.setSize(window.innerWidth, window.innerHeight);
+            resizeAmbient();
             bloomPass.resolution.set(window.innerWidth, window.innerHeight);
             renderer.shadowMap.needsUpdate = true;
         });
@@ -2598,413 +2634,27 @@
            7. INTRO FLY-BY MET CATMULLROMCURVE3
            ========================================================================== */
 
-        // Intro paden: 18 seconden doorlopend filmisch shot
-        const vs = CONFIG.voxelSize;
-
-        const introCamCurve = new THREE.CatmullRomCurve3([
-            new THREE.Vector3(8, 4.0, 12),                    // 0s: Sneeuwvlakte, blik omhoog
-            new THREE.Vector3(6, 6.5, 14),                    // 3s: Kantelt naar beneden
-            new THREE.Vector3(-12, 11.0, 16),                 // 6s: Duikt over de boomtoppen
-            new THREE.Vector3(-6, 4.2, 8),                    // 8.5s: Laag over de sneeuw
-            new THREE.Vector3(2.2, 7.0, 7.5),                 // 11s: Halve draai rond de paal voor bordje 90° N
-            new THREE.Vector3(6.75, 2.8, 3.2),                // 14s: Rakelings langs het werkplaatsraam
-            new THREE.Vector3(20, 11.0, 18),                  // 16s: Achterwaarts omhoog
-            FINAL_CAM_POS                                     // 18s: Eindshot
-        ]);
-
-        const introTargetCurve = new THREE.CatmullRomCurve3([
-            new THREE.Vector3(0, 50, -35),                    // 0s: Noorderlicht en sterren
-            new THREE.Vector3(0, 30, -20),                    // 3s: Kantelt omlaag
-            new THREE.Vector3(-3, 5.0, 2),                    // 6s: Boomtoppen en sneeuw
-            new THREE.Vector3(0.5, 6.0, 0.5),                 // 8.5s: Poolpaal
-            new THREE.Vector3(1.4, 8.3, 1.4),                 // 11s: Bordje '90° N' haarscherp
-            new THREE.Vector3(6.75, 1.5, -4.05),              // 14s: Hamerende elf in warm licht door raam
-            new THREE.Vector3(3.5, 3.5, -2),                  // 16s: Diorama centrum
-            FINAL_CAM_TARGET                                  // 18s: Eindshot doelwit
-        ]);
-
-        const introKeyTimes = [0, 3.0, 6.0, 8.8, 11.0, 13.8, 16.0, 18.0];
-        function getCurveU(t) {
-            if (t <= 0) return 0;
-            if (t >= 18) return 1;
-            for (let i = 0; i < introKeyTimes.length - 1; i++) {
-                const t0 = introKeyTimes[i];
-                const t1 = introKeyTimes[i + 1];
-                if (t >= t0 && t <= t1) {
-                    const frac = (t - t0) / (t1 - t0);
-                    const smoothFrac = frac * frac * (3 - 2 * frac);
-                    const u0 = i / (introKeyTimes.length - 1);
-                    const u1 = (i + 1) / (introKeyTimes.length - 1);
-                    return u0 + smoothFrac * (u1 - u0);
-                }
-            }
-            return 1;
-        }
-
-        const tempCamPos = new THREE.Vector3();
-        const tempCamTarget = new THREE.Vector3();
-
+        const introCamCurve = spaceIntro.cameraCurve;
+        const introTargetCurve = spaceIntro.targetCurve;
         function applyIntro(tSeconds) {
-            const clampedT = Math.max(0, Math.min(18.0, tSeconds));
-            const progress = clampedT / 18.0;
-            const u = getCurveU(clampedT);
-
-            introCamCurve.getPoint(u, tempCamPos);
-            introTargetCurve.getPoint(u, tempCamTarget);
-
-            if (tempCamPos.y < 2.5) tempCamPos.y = 2.5;
-
-            camera.position.copy(tempCamPos);
-            controls.target.copy(tempCamTarget);
-            camera.lookAt(tempCamTarget);
-
-            camera.fov = 46 - Math.sin(progress * Math.PI) * 5;
-            camera.updateProjectionMatrix();
-
-            const introTitle = document.getElementById('intro-title');
-            if (clampedT < 3.2) {
-                introTitle.style.opacity = Math.sin((clampedT / 3.2) * Math.PI);
-            } else {
-                introTitle.style.opacity = '0';
-            }
-
-            if (progress >= 1.0 && cameraState === 'intro') {
-                skipIntro();
-            }
+            const result = spaceIntro.apply(tSeconds);
+            controls.target.copy(result.target);
+            const t = spaceIntro.diagnostics.time;
+            document.getElementById('intro-title').style.opacity =
+                String(THREE.MathUtils.smoothstep(t, 17, 19) * (1 - THREE.MathUtils.smoothstep(t, 21, 23)));
+            if (result.complete && cameraState === 'intro') skipIntro();
         }
 
         /* ==========================================================================
            PROCEDURELE WEB AUDIO API SYNTHESE VOOR DE INTRO FLY-BY
            ========================================================================== */
 
-        class ProceduralAudioManager {
-            constructor() {
-                this.ctx = null;
-                this.isInitialized = false;
-                this.isEnabled = true;
-                this.masterGain = null;
-                this.windGain = null;
-                this.windFilter = null;
-                this.windSubOsc = null;
-                this.auroraGain = null;
-                this.auroraVoices = [];
-                this.auroraFilter = null;
-                this.bellIndex = 0;
-                this.isIntroDone = false;
-
-                // Tijdlijn voor kristallen belletjes bij sterren en vlucht-momenten
-                this.bellSchedule = [
-                    { t: 0.5, freq: 1760.00, vol: 0.16 }, // A6 · Sterrenhemel
-                    { t: 1.2, freq: 2217.46, vol: 0.18 }, // C#7
-                    { t: 2.0, freq: 2637.02, vol: 0.20 }, // E7 · Kristal fonkeling
-                    { t: 2.8, freq: 3322.44, vol: 0.18 }, // G#7 · Hoge glans
-                    { t: 3.8, freq: 2217.46, vol: 0.16 }, // C#7
-                    { t: 5.2, freq: 1760.00, vol: 0.15 }, // A6 · Noorderlicht boog
-                    { t: 6.8, freq: 1318.51, vol: 0.18 }, // E6 · Boomtoppen
-                    { t: 8.8, freq: 1661.22, vol: 0.18 }, // G#6 · Laag over sneeuw
-                    { t: 11.0, freq: 1975.53, vol: 0.22 }, // B6 · 90° N paal bordje
-                    { t: 13.8, freq: 2217.46, vol: 0.20 }, // C#7 · Werkplaatsraam warmte
-                    { t: 14.5, freq: 1760.00, vol: 0.18 }, // A6 · Hamerende elf
-                    { t: 16.2, freq: 1318.51, vol: 0.16 }  // E6 · Slotoverzicht
-                ];
-            }
-
-            init() {
-                if (this.isInitialized) return;
-                try {
-                    const AudioCtxClass = window.AudioContext || window.webkitAudioContext;
-                    if (!AudioCtxClass) return;
-                    this.ctx = new AudioCtxClass();
-
-                    this.masterGain = this.ctx.createGain();
-                    const initialVol = (this.isIntroDone || !this.isEnabled) ? 0.0001 : 0.70;
-                    this.masterGain.gain.setValueAtTime(initialVol, this.ctx.currentTime);
-                    this.masterGain.gain.value = initialVol;
-                    this.masterGain.connect(this.ctx.destination);
-
-                    // 1. Winterse winddrone (loopende ruisbuffer + resonant filter + sub-bass)
-                    this._createWindDrone();
-
-                    // 2. Etherische synth-pad voor het noorderlicht
-                    this._createAuroraPad();
-
-                    this.isInitialized = true;
-
-                    // Direct proberen te hervatten indien het browser autoplay-beleid dit toelaat
-                    if (this.ctx.state === 'suspended') {
-                        this.ctx.resume().catch(() => {});
-                    }
-                } catch (e) {
-                    console.warn('Web Audio niet beschikbaar:', e);
-                }
-            }
-
-            _createWindDrone() {
-                const bufferSize = this.ctx.sampleRate * 4;
-                const noiseBuffer = this.ctx.createBuffer(1, bufferSize, this.ctx.sampleRate);
-                const output = noiseBuffer.getChannelData(0);
-                let lastOut = 0.0;
-                for (let i = 0; i < bufferSize; i++) {
-                    const white = Math.random() * 2 - 1;
-                    lastOut = (lastOut + (0.02 * white)) / 1.02;
-                    output[i] = lastOut * 3.5;
-                }
-                // Zachte 0.1s crossfade aan het begin en einde om loop-klikjes te elimineren
-                const fadeSamples = Math.floor(this.ctx.sampleRate * 0.1);
-                for (let i = 0; i < fadeSamples; i++) {
-                    const alpha = i / fadeSamples;
-                    output[i] = output[i] * alpha + output[bufferSize - fadeSamples + i] * (1 - alpha);
-                }
-
-                const noiseSource = this.ctx.createBufferSource();
-                noiseSource.buffer = noiseBuffer;
-                noiseSource.loop = true;
-
-                this.windFilter = this.ctx.createBiquadFilter();
-                this.windFilter.type = 'bandpass';
-                this.windFilter.frequency.setValueAtTime(260, this.ctx.currentTime);
-                this.windFilter.Q.setValueAtTime(2.8, this.ctx.currentTime);
-
-                // Zachte LFO voor windvlagen
-                const windLfo = this.ctx.createOscillator();
-                windLfo.type = 'sine';
-                windLfo.frequency.setValueAtTime(0.14, this.ctx.currentTime);
-                const windLfoGain = this.ctx.createGain();
-                windLfoGain.gain.setValueAtTime(130, this.ctx.currentTime);
-                windLfo.connect(windLfoGain);
-                windLfoGain.connect(this.windFilter.frequency);
-                windLfo.start();
-
-                // Sub-bass drone voor poolatmosfeer
-                this.windSubOsc = this.ctx.createOscillator();
-                this.windSubOsc.type = 'sine';
-                this.windSubOsc.frequency.setValueAtTime(55, this.ctx.currentTime);
-                const subFilter = this.ctx.createBiquadFilter();
-                subFilter.type = 'lowpass';
-                subFilter.frequency.setValueAtTime(95, this.ctx.currentTime);
-                const subGain = this.ctx.createGain();
-                subGain.gain.setValueAtTime(0.32, this.ctx.currentTime);
-                this.windSubOsc.connect(subFilter);
-                subFilter.connect(subGain);
-                this.windSubOsc.start();
-
-                this.windGain = this.ctx.createGain();
-                this.windGain.gain.setValueAtTime(0.24, this.ctx.currentTime);
-
-                noiseSource.connect(this.windFilter);
-                this.windFilter.connect(this.windGain);
-                subGain.connect(this.windGain);
-                this.windGain.connect(this.masterGain);
-
-                noiseSource.start();
-            }
-
-            _createAuroraPad() {
-                const freqs = [
-                    { f: 220.00, detune: 0, type: 'sine', vol: 0.28 },
-                    { f: 329.63, detune: 4, type: 'sine', vol: 0.25 },
-                    { f: 493.88, detune: -5, type: 'triangle', vol: 0.22 },
-                    { f: 554.37, detune: 6, type: 'sine', vol: 0.18 },
-                    { f: 659.25, detune: -3, type: 'sine', vol: 0.14 }
-                ];
-
-                this.auroraFilter = this.ctx.createBiquadFilter();
-                this.auroraFilter.type = 'lowpass';
-                this.auroraFilter.frequency.setValueAtTime(750, this.ctx.currentTime);
-                this.auroraFilter.Q.setValueAtTime(1.8, this.ctx.currentTime);
-
-                const padLfo = this.ctx.createOscillator();
-                padLfo.type = 'sine';
-                padLfo.frequency.setValueAtTime(0.18, this.ctx.currentTime);
-                const padLfoGain = this.ctx.createGain();
-                padLfoGain.gain.setValueAtTime(320, this.ctx.currentTime);
-                padLfo.connect(padLfoGain);
-                padLfoGain.connect(this.auroraFilter.frequency);
-                padLfo.start();
-
-                this.auroraGain = this.ctx.createGain();
-                this.auroraGain.gain.setValueAtTime(0.30, this.ctx.currentTime);
-
-                this.auroraVoices = freqs.map(item => {
-                    const osc = this.ctx.createOscillator();
-                    osc.type = item.type;
-                    osc.frequency.setValueAtTime(item.f, this.ctx.currentTime);
-                    osc.detune.setValueAtTime(item.detune, this.ctx.currentTime);
-                    const vGain = this.ctx.createGain();
-                    vGain.gain.setValueAtTime(item.vol, this.ctx.currentTime);
-                    osc.connect(vGain);
-                    vGain.connect(this.auroraFilter);
-                    osc.start();
-                    return { osc, vGain };
-                });
-
-                this.auroraFilter.connect(this.auroraGain);
-                this.auroraGain.connect(this.masterGain);
-            }
-
-            playCrystalBell(freq, vol = 0.20, decay = 1.6) {
-                if (!this.ctx || !this.isInitialized || this.ctx.state !== 'running' || !this.isEnabled || this.isIntroDone) return;
-                try {
-                    const now = this.ctx.currentTime;
-                    const osc = this.ctx.createOscillator();
-                    osc.type = 'sine';
-                    osc.frequency.setValueAtTime(freq, now);
-
-                    const osc2 = this.ctx.createOscillator();
-                    osc2.type = 'sine';
-                    osc2.frequency.setValueAtTime(freq * 2.004, now);
-
-                    const bellGain = this.ctx.createGain();
-                    bellGain.gain.setValueAtTime(0, now);
-                    bellGain.gain.linearRampToValueAtTime(vol, now + 0.015);
-                    bellGain.gain.exponentialRampToValueAtTime(0.0001, now + decay);
-
-                    const bellGain2 = this.ctx.createGain();
-                    bellGain2.gain.setValueAtTime(0, now);
-                    bellGain2.gain.linearRampToValueAtTime(vol * 0.35, now + 0.015);
-                    bellGain2.gain.exponentialRampToValueAtTime(0.0001, now + decay * 0.7);
-
-                    let panner = null;
-                    if (this.ctx.createStereoPanner) {
-                        panner = this.ctx.createStereoPanner();
-                        panner.pan.setValueAtTime((Math.random() - 0.5) * 0.7, now);
-                    }
-
-                    osc.connect(bellGain);
-                    osc2.connect(bellGain2);
-
-                    if (panner) {
-                        bellGain.connect(panner);
-                        bellGain2.connect(panner);
-                        panner.connect(this.masterGain);
-                    } else {
-                        bellGain.connect(this.masterGain);
-                        bellGain2.connect(this.masterGain);
-                    }
-
-                    osc.start(now);
-                    osc2.start(now);
-                    osc.stop(now + decay + 0.05);
-                    osc2.stop(now + decay + 0.05);
-                } catch (e) {}
-            }
-
-            playWarmWindowChime() {
-                const chord = [440.0, 554.37, 659.25, 880.0];
-                chord.forEach((f, idx) => {
-                    setTimeout(() => {
-                        this.playCrystalBell(f, 0.14, 2.2);
-                    }, idx * 120);
-                });
-            }
-
-            update(introT, isIntro) {
-                if (!this.ctx || !this.isInitialized) return;
-                if (!isIntro || this.isIntroDone) return;
-
-                const now = this.ctx.currentTime;
-
-                if (this.windGain && this.auroraGain) {
-                    if (introT < 4.0) {
-                        this.auroraGain.gain.setTargetAtTime(0.34, now, 0.4);
-                        this.windGain.gain.setTargetAtTime(0.20, now, 0.4);
-                    } else if (introT < 9.0) {
-                        this.windGain.gain.setTargetAtTime(0.38, now, 0.5);
-                        this.auroraGain.gain.setTargetAtTime(0.20, now, 0.5);
-                    } else if (introT < 14.0) {
-                        this.windGain.gain.setTargetAtTime(0.24, now, 0.4);
-                        this.auroraGain.gain.setTargetAtTime(0.26, now, 0.4);
-                    } else {
-                        this.windGain.gain.setTargetAtTime(0.16, now, 0.4);
-                        this.auroraGain.gain.setTargetAtTime(0.22, now, 0.4);
-                    }
-                }
-
-                while (this.bellIndex < this.bellSchedule.length && introT >= this.bellSchedule[this.bellIndex].t) {
-                    const item = this.bellSchedule[this.bellIndex];
-                    this.playCrystalBell(item.freq, item.vol, 1.8);
-                    if (item.t === 13.8) {
-                        this.playWarmWindowChime();
-                    }
-                    this.bellIndex++;
-                }
-
-                if (introT >= 18.0 && !this.isIntroDone) {
-                    this.fadeOut();
-                }
-            }
-
-            fadeOut(duration = 1.8) {
-                this.isIntroDone = true;
-                if (!this.ctx || !this.isInitialized || !this.masterGain) return;
-                const now = this.ctx.currentTime;
-                this.masterGain.gain.cancelScheduledValues(now);
-                this.masterGain.gain.setValueAtTime(this.masterGain.gain.value, now);
-                this.masterGain.gain.setTargetAtTime(0.0001, now, Math.max(0.05, duration * 0.35));
-            }
-
-            resetIntro() {
-                this.bellIndex = 0;
-                this.isIntroDone = false;
-                if (!this.ctx || !this.isInitialized) {
-                    this.init();
-                }
-                if (this.ctx && this.ctx.state === 'suspended') {
-                    this.ctx.resume().catch(() => {});
-                }
-                if (this.masterGain && this.isEnabled) {
-                    const now = this.ctx.currentTime;
-                    this.masterGain.gain.cancelScheduledValues(now);
-                    this.masterGain.gain.setValueAtTime(this.masterGain.gain.value, now);
-                    this.masterGain.gain.setTargetAtTime(0.70, now, 0.25);
-                }
-            }
-
-            toggleSound() {
-                this.init();
-                if (this.ctx && this.ctx.state === 'suspended') {
-                    this.ctx.resume().catch(() => {});
-                }
-                this.isEnabled = !this.isEnabled;
-                const soundBtn = document.getElementById('btn-toggle-sound');
-                if (!this.isEnabled) {
-                    if (this.masterGain) {
-                        const now = this.ctx.currentTime;
-                        this.masterGain.gain.cancelScheduledValues(now);
-                        this.masterGain.gain.setValueAtTime(this.masterGain.gain.value, now);
-                        this.masterGain.gain.setTargetAtTime(0.0001, now, 0.15);
-                    }
-                    if (soundBtn) soundBtn.textContent = 'Geluid: Uit';
-                } else {
-                    // Alleen het mastervolume opschroeven als de intro nog actief is.
-                    // Indien de intro al voorbij is, blijft het stil totdat de intro opnieuw wordt gestart.
-                    if (this.masterGain && !this.isIntroDone) {
-                        const now = this.ctx.currentTime;
-                        this.masterGain.gain.cancelScheduledValues(now);
-                        this.masterGain.gain.setValueAtTime(this.masterGain.gain.value, now);
-                        this.masterGain.gain.setTargetAtTime(0.70, now, 0.2);
-                    }
-                    if (soundBtn) soundBtn.textContent = 'Geluid: Aan';
-                }
-                return this.isEnabled;
-            }
-
-            tryResume() {
-                if (!this.isInitialized) this.init();
-                if (this.ctx && this.ctx.state === 'suspended') {
-                    this.ctx.resume().then(() => {
-                        if (this.isIntroDone && this.masterGain) {
-                            this.masterGain.gain.setValueAtTime(0.0001, this.ctx.currentTime);
-                        }
-                    }).catch(() => {});
-                }
-            }
-        }
-
-        const soundManager = new ProceduralAudioManager();
+        const soundManager = new IntroMusic();
         window.__soundManager = soundManager;
 
         function skipIntro() {
+            frozenIntroActive = false;
+            spaceIntro.leave();
             cameraState = 'buiten';
             camera.position.copy(FINAL_CAM_POS);
             controls.target.copy(FINAL_CAM_TARGET);
@@ -3025,15 +2675,55 @@
         window.toggleInsideOutsideView = toggleInsideOutsideView;
         window.getCameraState = () => cameraState;
         window.applyIntro = applyIntro;
+        // Deterministic timeline seeking for visual regression and scene authoring.
+        window.seekIntro = seconds => {
+            if (!Number.isFinite(seconds)) throw new TypeError('Intro time must be finite');
+            frozenIntroTime = THREE.MathUtils.clamp(seconds, 0, INTRO_DURATION);
+            frozenIntroActive = true; cameraState = 'intro';
+            document.body.classList.remove('intro-finished');
+            soundManager.pauseForSeek(frozenIntroTime);
+            applyIntro(frozenIntroTime);
+        };
         window.getIntroTime = () => introTime;
+
+        const village = createVillage({ scene, camera, controls, renderer,
+            onExplore() {
+                skipIntro();
+                controls.enabled = false;
+                workshop.userData.setOpenTarget(0);
+                document.getElementById('btn-toggle-view').textContent = 'Kijk binnen';
+            },
+            onOverview() {
+                skipIntro(); controls.enabled = true;
+                workshop.userData.setOpenTarget(0);
+                document.getElementById('btn-toggle-view').textContent = 'Kijk binnen';
+            }
+        });
+        window.village = village;
+        spaceIntro.configure({ sky, stars, aurora, snow });
+        const party = createPartyMode({ scene, navigation: village.navigation, sound: soundManager,
+            onStreet() {
+                village.setMode('overview');
+                controls.autoRotate = false;
+                camera.position.set(12, 8, -18);
+                controls.target.set(0, 4, -42);
+                controls.update();
+                recordInteraction();
+            }
+        });
+        window.party = party;
+        new ResizeObserver(([entry]) => {
+            document.documentElement.style.setProperty('--explore-panel-height', `${entry.target.getBoundingClientRect().height}px`);
+        }).observe(document.getElementById('explore-panel'));
 
         // Prefers reduced motion controle
         const prefersReducedMotion = window.matchMedia('(prefers-reduced-motion: reduce)').matches;
-        if (prefersReducedMotion || SKIP_INTRO) {
+        if ((prefersReducedMotion || SKIP_INTRO) && FROZEN_T === null) {
             skipIntro();
         }
 
         if (INITIAL_VIEW === 'binnen') {
+            spaceIntro.leave();
             cameraState = 'binnen';
             workshop.userData.setOpenImmediate(1.0);
             camera.position.copy(insideCamPos);
@@ -3052,9 +2742,14 @@
             if (fo) fo.style.display = 'none';
         }
 
+        document.getElementById('btn-skip-intro').addEventListener('click', skipIntro);
         document.getElementById('btn-replay-intro').addEventListener('click', () => {
+            village.setMode('overview');
+            frozenIntroActive = false;
             cameraState = 'intro';
             introTime = 0.0;
+            timer.reset();
+            applyIntro(0);
             document.body.classList.remove('intro-finished');
             soundManager.resetIntro();
         });
@@ -3063,7 +2758,8 @@
             soundManager.toggleSound();
         });
 
-        function unlockAudioOnGesture() {
+        function unlockAudioOnGesture(event) {
+            if (event.target instanceof Element && event.target.closest('#btn-toggle-sound')) return;
             soundManager.tryResume();
         }
         ['pointerdown', 'touchstart', 'keydown', 'click'].forEach(evt => {
@@ -3089,14 +2785,17 @@
 
         function animate(timestamp) {
             timer.update(timestamp);
-            const dt = Math.min(timer.getDelta(), 0.1);
+            const frameDelta = Math.max(0, timer.getDelta());
+            const dt = Math.min(frameDelta, 0.1);
             const t = timer.getElapsed();
 
             // Intro regie
-            if (FROZEN_T !== null) {
-                applyIntro(FROZEN_T);
+            if (village.mode !== 'overview') {
+                village.update(dt, t);
+            } else if (frozenIntroActive) {
+                applyIntro(frozenIntroTime);
             } else if (cameraState === 'intro') {
-                introTime += dt;
+                introTime += frameDelta;
                 applyIntro(introTime);
                 soundManager.update(introTime, true);
             } else if (cameraState === 'naar_binnen') {
@@ -3119,15 +2818,22 @@
                 controls.update();
             }
 
+            if (village.mode === 'overview') village.update(dt, t);
+
             // Update actieve objecten
             for (let i = 0; i < animatedObjects.length; i++) {
                 const obj = animatedObjects[i];
                 if (obj.userData.update) {
-                    obj.userData.update(dt, t);
+                    obj.userData.update(dt, obj === aurora && cameraState === 'intro' ? spaceIntro.diagnostics.time : t);
                 }
             }
 
+            party.update(dt, t, cameraState === 'intro' || frozenIntroActive);
+
             renderer.info.reset();
+            // Keep contact shading local: orbital views use the same village,
+            // but their kilometre-scale depth range is unsuitable for SSAO.
+            ambientPass.enabled = spaceIntro.diagnostics.localAtmosphere > .85 && CONFIG.qualityLevel !== 'Laag';
             composer.render();
 
             const calls = renderer.info.render.calls;
@@ -3148,13 +2854,17 @@
                         if (CONFIG.qualityLevel === 'Hoog') {
                             CONFIG.qualityLevel = 'Midden';
                             renderer.setPixelRatio(1.0);
+                            composer.setPixelRatio(1.0);
+                            resizeAmbient();
                             const sm = snow.userData.mesh;
                             if (sm) sm.geometry.setDrawRange(0, Math.floor(CONFIG.snowFlakesCount * 0.65));
                             lightsGroup.userData.moonLight.shadow.mapSize.set(1024, 1024);
                             renderer.shadowMap.needsUpdate = true;
                         } else if (CONFIG.qualityLevel === 'Midden') {
                             CONFIG.qualityLevel = 'Laag';
-                            renderer.setPixelRatio(0.85);
+                            renderer.setPixelRatio(0.75);
+                            composer.setPixelRatio(0.75);
+                            resizeAmbient();
                             const sm = snow.userData.mesh;
                             if (sm) sm.geometry.setDrawRange(0, Math.floor(CONFIG.snowFlakesCount * 0.35));
                             lightsGroup.userData.moonLight.shadow.mapSize.set(512, 512);
@@ -3180,20 +2890,31 @@
                 window.__debugInfo.calls = calls;
                 window.__debugInfo.triangles = triangles;
                 window.__debugInfo.fps = currentFps;
+                window.__debugInfo.quality = CONFIG.qualityLevel;
             }
         }
 
         // Shaders vooraf compileren en fade-in na voltooien
         async function init() {
             soundManager.init();
+            await spaceIntro.ready;
             try {
                 await renderer.compileAsync(scene, camera);
             } catch (e) {
                 // Terugval op synchrone compilatie
                 renderer.compile(scene, camera);
             }
+            // Precompile the orbital materials while they are actually visible.
+            // A hidden globe is skipped by compileAsync and left early frames blank.
+            if (cameraState === 'intro' || frozenIntroActive) {
+                applyIntro(frozenIntroActive ? frozenIntroTime : 0);
+                await renderer.compileAsync(scene, camera);
+            }
+            ambientPass.enabled = spaceIntro.diagnostics.localAtmosphere > .85 && CONFIG.qualityLevel !== 'Laag';
             renderer.shadowMap.needsUpdate = true;
+            composer.render();
             document.getElementById('fade-overlay').style.opacity = '0';
+            timer.reset();
             renderer.setAnimationLoop(animate);
         }
 
