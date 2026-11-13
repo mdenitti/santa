@@ -1,4 +1,4 @@
-import * as THREE from 'three';
+import * as THREE from './vendor/three/build/three.module.js';
 import { createPolarAurora } from './polar-aurora.js';
 
 // One coordinate system from orbit to the street. The globe is deliberately

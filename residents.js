@@ -1,5 +1,5 @@
-import * as THREE from 'three';
-import { mergeGeometries } from 'three/addons/utils/BufferGeometryUtils.js';
+import * as THREE from './vendor/three/build/three.module.js';
+import { mergeGeometries } from './vendor/three/examples/jsm/utils/BufferGeometryUtils.js';
 
 // A whole village of articulated characters in ten instanced draws. Facial
 // features, clothing, parcels and carts are geometry, rather than billboard art.

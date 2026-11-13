@@ -1,5 +1,5 @@
-import * as THREE from 'three';
-import { mergeGeometries } from 'three/addons/utils/BufferGeometryUtils.js';
+import * as THREE from './vendor/three/build/three.module.js';
+import { mergeGeometries } from './vendor/three/examples/jsm/utils/BufferGeometryUtils.js';
 import { createVillageLife } from './residents.js';
 import { renderIntroMusic } from './intro-music.js';
 

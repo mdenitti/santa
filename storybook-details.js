@@ -1,5 +1,5 @@
-import * as THREE from 'three';
-import { mergeGeometries } from 'three/addons/utils/BufferGeometryUtils.js';
+import * as THREE from './vendor/three/build/three.module.js';
+import { mergeGeometries } from './vendor/three/examples/jsm/utils/BufferGeometryUtils.js';
 
 // Small, inhabited moments are intentionally kept inside existing building / bench
 // envelopes. All rigid details share material batches; no new shadow lights.

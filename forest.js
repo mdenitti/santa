@@ -1,5 +1,5 @@
-import * as THREE from 'three';
-import { mergeGeometries } from 'three/addons/utils/BufferGeometryUtils.js';
+import * as THREE from './vendor/three/build/three.module.js';
+import { mergeGeometries } from './vendor/three/examples/jsm/utils/BufferGeometryUtils.js';
 
 // Six reusable, deterministic spruce crowns. Needles are crossed tapered
 // ribbons of geometry, not a texture on a cone. LOD changes density at distance.

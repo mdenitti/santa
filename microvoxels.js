@@ -1,4 +1,4 @@
-import * as THREE from 'three';
+import * as THREE from './vendor/three/build/three.module.js';
 
 // A surface mesher: emit only the exposed faces of the 12.5 cm cells.
 // Hidden micro-cube interiors cost no vertices, and object dimensions stay intact.

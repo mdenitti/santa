@@ -40,13 +40,17 @@ async function main() {
     catch { throw new Error(`Export tooling is missing: install esbuild and three in ${toolsRoot}, or set SANTA_EXPORT_TOOLS.`); }
 
     const html = fs.readFileSync(path.join(root, 'index.html'), 'utf8');
-    const modulePattern = /<script\b[^>]*\btype=["']module["'][^>]*>([\s\S]*?)<\/script\s*>/i;
+    const modulePattern = /<script\b([^>]*\btype=["']module["'][^>]*)>([\s\S]*?)<\/script\s*>/i;
     const match = html.match(modulePattern);
-    if (!match) throw new Error('index.html has no inline module entry');
+    if (!match) throw new Error('index.html has no module entry');
+    const srcMatch = match[1].match(/\bsrc=["']([^"']+)["']/i);
+    const entryContents = srcMatch
+        ? fs.readFileSync(path.resolve(root, srcMatch[1]), 'utf8')
+        : match[2];
     const embedded = new Set();
     const assetURL = /new\s+URL\(\s*(["'])(\.\/assets\/[^"']+)\1\s*,\s*import\.meta\.url\s*\)\.href/g;
     const result = await esbuild.build({
-        stdin: { contents: match[1], resolveDir: root, sourcefile: 'santa-entry.js' },
+        stdin: { contents: entryContents, resolveDir: root, sourcefile: 'santa-entry.js' },
         bundle: true, write: false, format: 'iife', minify: true,
         target: ['chrome110', 'firefox115', 'safari16'], legalComments: 'inline',
         nodePaths: [path.join(toolsRoot, 'node_modules')],

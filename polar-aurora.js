@@ -1,4 +1,4 @@
-import * as THREE from 'three';
+import * as THREE from './vendor/three/build/three.module.js';
 
 // Thin, folded curtains follow the curvature of the polar cap. Three ribbons
 // remain cheap to draw and leave the village visible through the centre.
