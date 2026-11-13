@@ -161,7 +161,7 @@ function createGeometry(variant, detail) {
                     quaternion.setFromAxisAngle(up, a);
                     const snowPosition = origin.clone().addScaledVector(radial, r * .05); snowPosition.y += .007;
                     matrix.compose(snowPosition, quaternion, new THREE.Vector3(r * .15, .005 + random() * .003, spread * .65));
-                    snowcaps.push(cap.toNonIndexed().applyMatrix4(matrix)); cap.dispose();
+                    snowcaps.push((cap.index ? cap.toNonIndexed() : cap).applyMatrix4(matrix)); if (cap.index) cap.dispose();
                 }
             }
             spray(bend.clone().lerp(tip, .7), tip, a);
