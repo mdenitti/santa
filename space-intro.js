@@ -8,7 +8,7 @@ export const INTRO_DURATION = 32;
 const RADIUS = 950;
 const smooth = (a, b, t) => THREE.MathUtils.smoothstep(t, a, b);
 
-export function createSpaceIntro({ camera, renderPass, villageScene }) {
+export function createSpaceIntro({ camera, renderPass, villageScene, mobile = false }) {
     const orbital = new THREE.Group();
     orbital.name = 'Aarde onder het winterdorp';
     orbital.visible = false;
@@ -53,7 +53,7 @@ export function createSpaceIntro({ camera, renderPass, villageScene }) {
                 #include <colorspace_fragment>
             }`
     });
-    const earth = new THREE.Mesh(new THREE.SphereGeometry(RADIUS, 160, 100), earthMaterial);
+    const earth = new THREE.Mesh(new THREE.SphereGeometry(RADIUS, mobile ? 64 : 160, mobile ? 48 : 100), earthMaterial);
     earth.position.y = -RADIUS; earth.rotation.y = -1.5; orbital.add(earth);
     const earthReady = new Promise(resolve => {
         new THREE.TextureLoader().load(new URL('./assets/earth-atmos-2048.jpg', import.meta.url).href, texture => {
@@ -69,7 +69,7 @@ export function createSpaceIntro({ camera, renderPass, villageScene }) {
     const cloudsReady = new Promise(resolve => {
         new THREE.TextureLoader().load(new URL('./assets/earth-clouds-1024.png', import.meta.url).href, texture => {
             texture.colorSpace = THREE.SRGBColorSpace;
-            const clouds = new THREE.Mesh(new THREE.SphereGeometry(RADIUS + 4, 128, 80), new THREE.ShaderMaterial({
+            const clouds = new THREE.Mesh(new THREE.SphereGeometry(RADIUS + 4, mobile ? 48 : 128, mobile ? 32 : 80), new THREE.ShaderMaterial({
                 uniforms: { cloudMap: { value: texture }, sunDirection: { value: sun } }, vertexShader: vertex,
                 fragmentShader: `uniform sampler2D cloudMap;uniform vec3 sunDirection;
                     varying vec2 vUv;varying vec3 vNormal;
@@ -87,7 +87,7 @@ export function createSpaceIntro({ camera, renderPass, villageScene }) {
     });
     const ready = Promise.all([earthReady, nightReady, cloudsReady]);
     // A very thin atmospheric limb, shaded by the same sun as the surface.
-    const atmosphere = new THREE.Mesh(new THREE.SphereGeometry(RADIUS * 1.009, 128, 80), new THREE.ShaderMaterial({
+    const atmosphere = new THREE.Mesh(new THREE.SphereGeometry(RADIUS * 1.009, mobile ? 48 : 128, mobile ? 32 : 80), new THREE.ShaderMaterial({
         uniforms: { sunDirection: { value: sun } }, vertexShader: vertex,
         fragmentShader: `varying vec3 vNormal;varying vec3 vWorld;uniform vec3 sunDirection;
             void main(){vec3 n=normalize(vNormal);vec3 v=normalize(cameraPosition-vWorld);
@@ -104,7 +104,8 @@ export function createSpaceIntro({ camera, renderPass, villageScene }) {
     let seed = 951225;
     const random = () => { seed = (1664525 * seed + 1013904223) >>> 0; return seed / 4294967296; };
     const positions = [], sizes = [];
-    for (let i = 0; i < 2400; i++) {
+    const starCount = mobile ? 800 : 2400;
+    for (let i = 0; i < starCount; i++) {
         const a = random() * Math.PI * 2, y = random() * 2 - 1, r = Math.sqrt(1 - y * y);
         positions.push(Math.cos(a) * r * 7000, y * 7000, Math.sin(a) * r * 7000);
         sizes.push(random() < .025 ? 2 : .6 + random());
@@ -120,13 +121,13 @@ export function createSpaceIntro({ camera, renderPass, villageScene }) {
     })));
 
     const caption = document.createElement('div'); caption.id = 'orbital-caption'; caption.hidden = true;
-    Object.assign(caption.style, { position: 'fixed', left: '50%', bottom: '12%', transform: 'translateX(-50%)',
-        width: '90%', textAlign: 'center', pointerEvents: 'none', zIndex: '21', color: '#e8e5df', textShadow: '0 2px 18px #000', fontFamily: 'Georgia,serif' });
-    caption.innerHTML = '<span style="font:10px system-ui;letter-spacing:.3em;color:#b1bdd1">ERGENS, HEEL VER IN HET NOORDEN</span><div id="orbital-location" style="font-size:clamp(22px,3.4vw,38px);margin-top:12px">Waar de kerstlichtjes nooit doven</div>';
+    Object.assign(caption.style, { position: 'fixed', left: '50%', bottom: mobile ? 'max(14%, 78px)' : '12%', transform: 'translateX(-50%)',
+        width: 'min(92%, 680px)', padding: '0 16px', boxSizing: 'border-box', textAlign: 'center', pointerEvents: 'none', zIndex: '21', color: '#e8e5df', textShadow: '0 2px 18px #000', fontFamily: 'Georgia,serif' });
+    caption.innerHTML = `<span style="font:10px system-ui;letter-spacing:${mobile ? '.22em' : '.3em'};color:#b1bdd1">ERGENS, HEEL VER IN HET NOORDEN</span><div id="orbital-location" style="font-size:clamp(20px,4.5vw,38px);margin-top:10px">Waar de kerstlichtjes nooit doven</div>`;
     document.body.append(caption);
     const marker = document.createElement('div'); marker.id = 'orbital-village-marker'; marker.hidden = true;
     Object.assign(marker.style, { position: 'fixed', pointerEvents: 'none', zIndex: '20', color: '#f9d6a1',
-        font: '10px system-ui', letterSpacing: '.18em', textShadow: '0 2px 8px #000', whiteSpace: 'nowrap', transform: 'translate(20px,-50%)' });
+        font: '10px system-ui', letterSpacing: mobile ? '.12em' : '.18em', textShadow: '0 2px 8px #000', whiteSpace: 'nowrap', transform: 'translate(20px,-50%)' });
     marker.innerHTML = '<span style="display:inline-block;width:26px;height:1px;background:#d4b281;vertical-align:middle;margin-right:10px"></span>90° N · HET WINTERDORP';
     document.body.append(marker);
 
@@ -176,7 +177,7 @@ export function createSpaceIntro({ camera, renderPass, villageScene }) {
     function leave() {
         orbital.visible = false; terrainBlend.value = 0;
         villageScene.background = originalBackground; villageScene.fog = originalFog;
-        renderPass.scene = villageScene; restoreLocal();
+        if (renderPass) renderPass.scene = villageScene; restoreLocal();
         camera.near = .15; camera.far = 450; camera.updateProjectionMatrix();
         caption.hidden = marker.hidden = true;
         document.body.dataset.introStage = 'village';
@@ -205,7 +206,7 @@ export function createSpaceIntro({ camera, renderPass, villageScene }) {
         fog.density = originalFog.density * atmosphereReveal;
         villageScene.fog = fog;
         villageScene.background = night.clone().lerp(originalBackground, atmosphereReveal);
-        renderPass.scene = villageScene;
+        if (renderPass) renderPass.scene = villageScene;
         if (local) {
             local.sky.visible = t >= 13;
             local.sky.children[0].material.uniforms.introReveal.value = atmosphereReveal;
@@ -219,8 +220,12 @@ export function createSpaceIntro({ camera, renderPass, villageScene }) {
         caption.querySelector('#orbital-location').textContent = t < 7 ? 'Waar de kerstlichtjes nooit doven' : 'Een dorp, verscholen in de poolnacht';
         projectedVillage.set(-5, 4, 8).project(camera);
         marker.hidden = t > 11 || Math.abs(projectedVillage.x) > .8 || Math.abs(projectedVillage.y) > .8;
-        marker.style.left = `${(projectedVillage.x * .5 + .5) * innerWidth}px`;
-        marker.style.top = `${(-projectedVillage.y * .5 + .5) * innerHeight}px`;
+        const px = (projectedVillage.x * .5 + .5) * innerWidth;
+        const py = (-projectedVillage.y * .5 + .5) * innerHeight;
+        const flipLeft = px > innerWidth - 210;
+        marker.style.transform = flipLeft ? 'translate(calc(-100% - 14px), -50%)' : 'translate(16px, -50%)';
+        marker.style.left = `${Math.max(12, Math.min(innerWidth - 12, px))}px`;
+        marker.style.top = `${Math.max(56, Math.min(innerHeight - 90, py))}px`;
         marker.style.opacity = String(1 - smooth(8, 11, t));
         document.body.dataset.introStage = t < 16 ? 'orbit' : 'village';
         diagnostics.time = t;

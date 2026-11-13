@@ -3,7 +3,7 @@ import { mergeGeometries } from './vendor/three/examples/jsm/utils/BufferGeometr
 
 // Small, inhabited moments are intentionally kept inside existing building / bench
 // envelopes. All rigid details share material batches; no new shadow lights.
-export function createStorybookDetails({ root, buildings }) {
+export function createStorybookDetails({ root, buildings, mobile = false }) {
     const group = new THREE.Group();
     group.name = 'Kleine verhalen in het winterdorp';
     root.add(group);
@@ -20,11 +20,11 @@ export function createStorybookDetails({ root, buildings }) {
     };
     const geometry = {
         box: new THREE.BoxGeometry(1, 1, 1),
-        sphere: new THREE.SphereGeometry(1, 8, 6),
-        tube: new THREE.CylinderGeometry(1, 1, 1, 6),
+        sphere: new THREE.SphereGeometry(1, mobile ? 6 : 8, mobile ? 4 : 6),
+        tube: new THREE.CylinderGeometry(1, 1, 1, mobile ? 5 : 6),
         twig: new THREE.CylinderGeometry(0, 1, 1, 3, 1, true),
-        cone: new THREE.ConeGeometry(1, 1, 5),
-        ring: new THREE.TorusGeometry(1, .12, 5, 12),
+        cone: new THREE.ConeGeometry(1, 1, mobile ? 4 : 5),
+        ring: new THREE.TorusGeometry(1, .12, mobile ? 4 : 5, mobile ? 8 : 12),
     };
     const matrix = new THREE.Matrix4(), quaternion = new THREE.Quaternion();
     const position = new THREE.Vector3(), scale = new THREE.Vector3(), up = new THREE.Vector3(0, 1, 0), direction = new THREE.Vector3();
@@ -77,7 +77,7 @@ export function createStorybookDetails({ root, buildings }) {
         box(m.red, x + size * .22, y - size * .65, z, size * .27, size, size * .13, .25);
     }
     function garland(a, b, sag = .22) {
-        const count = Math.max(10, Math.ceil(Math.hypot(b[0] - a[0], b[1] - a[1]) * 9));
+        const count = Math.max(mobile ? 5 : 10, Math.ceil(Math.hypot(b[0] - a[0], b[1] - a[1]) * (mobile ? 4 : 9)));
         let previous = a;
         for (let i = 0; i <= count; i++) {
             const t = i / count;
@@ -88,10 +88,12 @@ export function createStorybookDetails({ root, buildings }) {
                 const tip = [p[0] + side * r, p[1] + .08 + random() * .08, p[2] + .02];
                 beam(p, tip, .007, m.pine, true);
                 // Individual tapered needles, not a row of chunky green beads.
-                for (const t of [.36, .68]) {
-                    const n = [THREE.MathUtils.lerp(p[0], tip[0], t), THREE.MathUtils.lerp(p[1], tip[1], t), p[2] + .025];
-                    beam(n, [n[0] + side * .075, n[1] + .012, n[2] + .022], .004, m.needle, true);
-                    beam(n, [n[0] + side * .014, n[1] + .075, n[2] + .015], .004, i % 3 ? m.pine : m.needle, true);
+                if (!mobile) {
+                    for (const t of [.36, .68]) {
+                        const n = [THREE.MathUtils.lerp(p[0], tip[0], t), THREE.MathUtils.lerp(p[1], tip[1], t), p[2] + .025];
+                        beam(n, [n[0] + side * .075, n[1] + .012, n[2] + .022], .004, m.needle, true);
+                        beam(n, [n[0] + side * .014, n[1] + .075, n[2] + .015], .004, i % 3 ? m.pine : m.needle, true);
+                    }
                 }
             }
             if (i % 8 === 4) {
@@ -262,7 +264,7 @@ export function createStorybookDetails({ root, buildings }) {
         const merged = mergeGeometries(parts);
         const mesh = new THREE.Mesh(merged, mat);
         mesh.name = 'Gebundelde dorpsdetails';
-        mesh.castShadow = mat !== m.star && mat !== m.flame;
+        mesh.castShadow = !mobile && mat !== m.star && mat !== m.flame;
         mesh.receiveShadow = true;
         group.add(mesh);
         triangles += merged.attributes.position.count / 3;

@@ -2,7 +2,7 @@
 <html lang="nl">
 <head>
     <meta charset="UTF-8">
-    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0, viewport-fit=cover">
     <title>Noordpool 90° N</title>
     <style>
         /* Basisstijlen en reset */
@@ -16,6 +16,7 @@
         body, html {
             width: 100%;
             height: 100%;
+            height: 100dvh;
             overflow: hidden;
             background-color: #070b1e;
             font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, Helvetica, Arial, sans-serif;
@@ -28,6 +29,7 @@
             width: 100%;
             height: 100%;
             display: block;
+            touch-action: none;
         }
 
         /* UI container */
@@ -254,18 +256,166 @@
         #touch-controls button { width:44px; height:44px; margin:3px; border-radius:10px; border:1px solid #e6c79155; color:#ffe4b6; background:#112b30dd; font-size:18px; touch-action:none; }
         #touch-controls .flight-touch { display:none; }
         body[data-explore-mode="fly"] #touch-controls .flight-touch { display:block; }
-        .flight-touch button { font-size:11px !important; }
-        @media (pointer:coarse) { body[data-explore-mode="walk"] #touch-controls, body[data-explore-mode="santa"] #touch-controls, body[data-explore-mode="fly"] #touch-controls { display:block; } }
-        @media (max-width:650px) {
-            #village-heading { top:24px; left:20px; } #village-heading h2 { font-size:30px; }
-            .eyebrow { font-size:8px; letter-spacing:.13em; } #village-heading p { font-size:12px; }
-            .assurio-badge { margin-top:8px; padding:5px 10px; gap:7px; }
-            .assurio-badge img { height:26px; }
-            .assurio-powered { font-size:8px; }
-            #hud-controls { top:154px; right:14px; max-width:95%; }
-            #explore-panel { left:12px; bottom:12px; max-width:calc(100% - 24px); padding:13px; }
-            #explore-panel .btn { padding:10px 9px; font-size:11px; } #explore-instructions { font-size:10px; }
-            #debug-overlay { top:180px; }
+        #touch-controls .flight-touch button { width:auto; min-width:58px; height:40px; padding:0 10px; font-size:11px !important; }
+        @media (pointer:coarse) {
+            body[data-explore-mode="walk"] #touch-controls,
+            body[data-explore-mode="santa"] #touch-controls,
+            body[data-explore-mode="fly"] #touch-controls { display:block; }
+        }
+        body[data-device="mobile"][data-explore-mode="walk"] #touch-controls,
+        body[data-device="mobile"][data-explore-mode="santa"] #touch-controls,
+        body[data-device="mobile"][data-explore-mode="fly"] #touch-controls { display:block; }
+        body[data-device="mobile"] .btn,
+        body[data-device="mobile"] .assurio-badge,
+        body[data-device="mobile"] #explore-panel,
+        body[data-device="mobile"] .cookie-banner {
+            -webkit-backdrop-filter:none;
+            backdrop-filter:none;
+        }
+        @media (max-width:768px) {
+            .btn,
+            .assurio-badge,
+            #explore-panel,
+            .cookie-banner {
+                -webkit-backdrop-filter:none;
+                backdrop-filter:none;
+            }
+            .cinema-bar { height:34px; }
+            #intro-title { width:90%; }
+            #intro-title h1 { font-size:clamp(1.75rem, 8.5vw, 2.6rem); letter-spacing:0.2rem; }
+            #intro-title p { font-size:0.9rem; letter-spacing:0.12rem; }
+            #hud-controls {
+                top:max(10px, env(safe-area-inset-top));
+                left:max(10px, env(safe-area-inset-left));
+                right:max(10px, env(safe-area-inset-right));
+                max-width:none;
+                flex-wrap:nowrap;
+                overflow-x:auto;
+                scrollbar-width:none;
+                gap:6px;
+                justify-content:flex-end;
+            }
+            #hud-controls::-webkit-scrollbar { display:none; }
+            #hud-controls .btn {
+                flex:0 0 auto;
+                white-space:nowrap;
+                padding:7px 10px;
+                font-size:10.5px;
+                border-radius:14px;
+                background:rgba(11,30,42,0.88);
+            }
+            #village-heading {
+                top:calc(max(10px, env(safe-area-inset-top)) + 44px);
+                left:max(12px, env(safe-area-inset-left));
+                right:max(12px, env(safe-area-inset-right));
+            }
+            .eyebrow { font-size:8px; letter-spacing:.14em; display:block; }
+            #village-heading h2 { font-size:clamp(24px, 7.2vw, 31px); margin-top:4px; line-height:1.1; }
+            #village-heading h2 span { font-size:10px; margin:4px 0 0 8px; }
+            #village-heading p { font-size:12px; margin-top:4px; }
+            .assurio-badge { margin-top:7px; padding:4px 9px 4px 8px; gap:6px; background:rgba(11,23,40,0.84); }
+            .assurio-badge img { height:22px; width:auto; }
+            .assurio-powered { font-size:8px; letter-spacing:0.12em; }
+            body[data-explore-mode="walk"] #village-heading .eyebrow,
+            body[data-explore-mode="walk"] #village-heading p,
+            body[data-explore-mode="walk"] .assurio-badge,
+            body[data-explore-mode="santa"] #village-heading .eyebrow,
+            body[data-explore-mode="santa"] #village-heading p,
+            body[data-explore-mode="santa"] .assurio-badge,
+            body[data-explore-mode="fly"] #village-heading .eyebrow,
+            body[data-explore-mode="fly"] #village-heading p,
+            body[data-explore-mode="fly"] .assurio-badge { display:none; }
+            #explore-panel {
+                left:max(10px, env(safe-area-inset-left));
+                right:max(10px, env(safe-area-inset-right));
+                bottom:max(10px, env(safe-area-inset-bottom));
+                width:auto;
+                max-width:none;
+                padding:11px 12px;
+                border-radius:14px;
+                background:rgba(11,23,40,0.92);
+            }
+            .explore-topline { font-size:13.5px; margin-bottom:8px; gap:7px; }
+            .explore-buttons {
+                flex-wrap:nowrap;
+                overflow-x:auto;
+                -webkit-overflow-scrolling:touch;
+                scrollbar-width:none;
+                gap:6px;
+                padding-bottom:2px;
+            }
+            .explore-buttons::-webkit-scrollbar { display:none; }
+            #explore-panel .btn {
+                flex:0 0 auto;
+                white-space:nowrap;
+                padding:8px 11px;
+                font-size:11.5px;
+            }
+            #party-status { margin-top:7px; font-size:10.5px; }
+            #explore-instructions { margin-top:7px; font-size:10.5px; line-height:1.4; }
+            #touch-controls {
+                right:max(12px, env(safe-area-inset-right));
+                bottom:calc(var(--explore-panel-height, 124px) + max(18px, env(safe-area-inset-bottom) + 10px));
+            }
+            #touch-controls button { width:44px; height:44px; margin:2px; font-size:17px; }
+            #debug-overlay {
+                top:auto;
+                bottom:calc(var(--explore-panel-height, 124px) + 18px);
+                left:max(10px, env(safe-area-inset-left));
+                font-size:0.72rem;
+                padding:6px 10px;
+            }
+            .cookie-banner {
+                left:max(10px, env(safe-area-inset-left));
+                right:max(10px, env(safe-area-inset-right));
+                bottom:max(10px, env(safe-area-inset-bottom));
+                width:auto;
+                max-width:none;
+                padding:14px;
+                background:rgba(11,23,40,0.97);
+            }
+        }
+        @media (max-height:520px) and (max-width:920px) {
+            .cinema-bar { height:30px; }
+            #intro-title h1 { font-size:2.1rem; letter-spacing:0.2rem; }
+            #hud-controls { top:max(8px, env(safe-area-inset-top)); right:max(12px, env(safe-area-inset-right)); }
+            #hud-controls .btn { padding:6px 9px; font-size:10.5px; }
+            #village-heading { top:max(8px, env(safe-area-inset-top)); left:max(14px, env(safe-area-inset-left)); }
+            #village-heading .eyebrow,
+            #village-heading p { display:none; }
+            #village-heading h2 { font-size:22px; margin-top:2px; }
+            #village-heading h2 span { font-size:10px; margin:3px 0 0 8px; }
+            .assurio-badge { margin-top:5px; padding:3px 8px; }
+            .assurio-badge img { height:18px; }
+            #explore-panel {
+                left:max(10px, env(safe-area-inset-left));
+                right:auto;
+                bottom:max(10px, env(safe-area-inset-bottom));
+                max-width:calc(100% - 24px);
+                padding:8px 10px;
+            }
+            body[data-explore-mode="walk"] #explore-panel,
+            body[data-explore-mode="santa"] #explore-panel,
+            body[data-explore-mode="fly"] #explore-panel {
+                max-width:calc(100% - 196px);
+            }
+            .explore-topline { font-size:12.5px; margin-bottom:6px; }
+            .explore-buttons {
+                flex-wrap:nowrap;
+                overflow-x:auto;
+                -webkit-overflow-scrolling:touch;
+                scrollbar-width:none;
+                gap:6px;
+            }
+            .explore-buttons::-webkit-scrollbar { display:none; }
+            #explore-panel .btn { flex:0 0 auto; white-space:nowrap; padding:7px 10px; font-size:11px; }
+            #explore-instructions { display:none; }
+            #touch-controls {
+                bottom:max(10px, env(safe-area-inset-bottom));
+                right:max(12px, env(safe-area-inset-right));
+            }
+            #touch-controls button { width:38px; height:38px; margin:2px; font-size:15px; }
+            #touch-controls .flight-touch button { min-width:50px; height:34px; font-size:10px !important; }
         }
         @media (prefers-reduced-motion:reduce) { *, *::before, *::after { scroll-behavior:auto !important; transition:none !important; } }
         body[data-intro-stage="orbit"] #village-heading,

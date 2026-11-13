@@ -206,30 +206,35 @@ function createGeometry(variant, detail) {
     return result;
 }
 
-function getVariant(seed) {
+function getVariant(seed, mobile = false) {
     const id = Math.abs(Math.trunc(seed)) % 6;
-    if (!variants.has(id)) variants.set(id, [0, 1, 2].map(detail => createGeometry(id, detail)));
-    return variants.get(id);
+    const key = mobile ? `m:${id}` : id;
+    const details = mobile ? [1, 2] : [0, 1, 2];
+    if (!variants.has(key)) variants.set(key, details.map(detail => createGeometry(id, detail)));
+    return variants.get(key);
 }
 
-function mesh(geometry, material) {
+function mesh(geometry, material, castShadow = true) {
     const result = new THREE.Mesh(geometry, material);
-    result.castShadow = result.receiveShadow = true;
+    result.castShadow = castShadow;
+    result.receiveShadow = true;
     return result;
 }
 
-export function createConifer({ height = 8, seed = 1, decorated = false } = {}) {
+export function createConifer({ height = 8, seed = 1, decorated = false, mobile = false, castShadow = true } = {}) {
     const root = new THREE.Group(); root.name = 'Fijnvertakte spar met dennennaalden';
     const model = new THREE.Group(); model.scale.setScalar(height); root.add(model);
     const lod = new THREE.LOD(); model.add(lod);
-    const geometries = getVariant(seed);
+    const geometries = getVariant(seed, mobile);
+    const levelNames = mobile ? ['Dennentakken', 'Bos op afstand'] : ['Individuele naalden', 'Dennentakken', 'Bos op afstand'];
+    const lodDistances = mobile ? [0, 18] : [0, 20, 45];
     geometries.forEach((g, index) => {
         const level = new THREE.Group();
-        level.name = ['Individuele naalden', 'Dennentakken', 'Bos op afstand'][index];
-        if (index === 0) level.add(mesh(g.bark, bark), mesh(g.needles, foliage), mesh(g.snow, snow));
-        else level.add(mesh(g.combined, foliage));
+        level.name = levelNames[index];
+        if (!mobile && index === 0) level.add(mesh(g.bark, bark, castShadow), mesh(g.needles, foliage, castShadow), mesh(g.snow, snow, castShadow));
+        else level.add(mesh(g.combined, foliage, castShadow));
         // LOD distances are world-space; tree scale does not change them.
-        lod.addLevel(level, [0, 20, 45][index]);
+        lod.addLevel(level, lodDistances[index]);
     });
     if (decorated) {
         const parts = [], ornaments = [[], []];

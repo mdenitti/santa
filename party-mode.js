@@ -50,7 +50,7 @@ class PartyAudio {
     }
 }
 
-export function createPartyMode({ scene, navigation, sound, onStreet, date = new Date() }) {
+export function createPartyMode({ scene, navigation, sound, onStreet, date = new Date(), mobile = false }) {
     const group = new THREE.Group(); group.name = 'Kerstfeest · 25 december'; group.visible = false; scene.add(group);
     const button = document.getElementById('btn-party'), streetButton = document.getElementById('btn-party-street');
     const status = document.getElementById('party-status');
@@ -63,6 +63,7 @@ export function createPartyMode({ scene, navigation, sound, onStreet, date = new
     const materials = palette.map(color => new THREE.MeshStandardMaterial({ color, emissive: color, emissiveIntensity: 1.5, roughness: .4 }));
     const frame = new THREE.MeshStandardMaterial({ color: 0x735c3c, roughness: .45, metalness: .5 });
     let bulbCount = 0;
+    const sparksPerBurst = mobile ? 64 : 136;
 
     function build() {
         if (built) return; built = true;
@@ -78,9 +79,10 @@ export function createPartyMode({ scene, navigation, sound, onStreet, date = new
             add(geometry, frame, from.add(to).multiplyScalar(.5).toArray(), [1,1,1], new THREE.Quaternion().setFromUnitVectors(new THREE.Vector3(0,1,0), delta.normalize())); geometry.dispose();
         }
         function string(a, b, count, sag) {
+            const steps = mobile ? Math.max(6, Math.ceil(count * 0.45)) : count;
             let previous = a;
-            for (let i = 1; i <= count; i++) {
-                const u = i / count, point = a.map((v, axis) => THREE.MathUtils.lerp(v, b[axis], u) - (axis === 1 ? Math.sin(u * Math.PI) * sag : 0));
+            for (let i = 1; i <= steps; i++) {
+                const u = i / steps, point = a.map((v, axis) => THREE.MathUtils.lerp(v, b[axis], u) - (axis === 1 ? Math.sin(u * Math.PI) * sag : 0));
                 beam(previous, point); add(sphere, materials[i % 4], [point[0], point[1] - .1, point[2]], [.085,.11,.085]);
                 bulbCount++; previous = point;
             }
@@ -109,18 +111,20 @@ export function createPartyMode({ scene, navigation, sound, onStreet, date = new
         const texture=new THREE.CanvasTexture(canvas); texture.colorSpace=THREE.SRGBColorSpace;
         const banner=new THREE.Mesh(new THREE.PlaneGeometry(8.8,1.65),new THREE.MeshStandardMaterial({ map:texture, emissiveMap:texture, emissive:0xffffff, emissiveIntensity:.45, side:THREE.DoubleSide }));
         banner.position.set(0,7,-35.5); group.add(banner);
-        for (const x of [-24,24]) { const light=new THREE.PointLight(0xffc780,28,22,2); light.position.set(x,5.5,-38); group.add(light); lights.push(light); }
+        if (!mobile) {
+            for (const x of [-24, 24]) { const light = new THREE.PointLight(0xffc780, 28, 22, 2); light.position.set(x, 5.5, -38); group.add(light); lights.push(light); }
+        }
 
         const paths = [ [[-42,-38],[0,-38],[40,-38]], [[-42,-30],[0,-30],[40,-30]], [[-25,27],[-27,10],[-20,4]], [[-20,42],[0,42],[30,42]] ]
             .map(path => path.slice(1).flatMap((p,i) => { const leg = navigation.plan(path[i],p); return i ? leg.slice(1) : leg; }));
-        life=createVillageLife({parent:group,paths,count:36,isWalkable:navigation.isWalkable,festive:true});
+        life=createVillageLife({parent:group,paths,count:mobile?14:36,isWalkable:navigation.isWalkable,festive:true,mobile});
         buildFireworks();
     }
     function buildFireworks() {
         const positions=[], velocities=[], phases=[], colors=[], ids=[];
         let seed=251225; const rand=()=>{seed=(Math.imul(seed,1664525)+1013904223)>>>0;return seed/4294967296;};
         const launches=[[-55,-70],[0,-76],[54,-60],[-70,4],[50,40],[-25,64]];
-        for(let burst=0;burst<6;burst++) for(let i=0;i<136;i++) {
+        for(let burst=0;burst<6;burst++) for(let i=0;i<sparksPerBurst;i++) {
             const azimuth=rand()*Math.PI*2, y=rand()*2-1, radius=Math.sqrt(1-y*y), speed=7+rand()*11;
             positions.push(launches[burst][0],48+burst%3*7,launches[burst][1]);
             velocities.push(Math.cos(azimuth)*radius*speed,y*speed,Math.sin(azimuth)*radius*speed);
@@ -144,6 +148,7 @@ export function createPartyMode({ scene, navigation, sound, onStreet, date = new
         enabled=!!next; if(enabled)build(); group.visible=enabled; startTime=null; elapsed=0; burstCycles.forEach((_, i) => { burstCycles[i] = Math.floor((i * 1.65 - 1.5) / 12); });
         button.setAttribute('aria-pressed',String(enabled)); button.textContent=enabled?'25 dec · Feest aan':'25 dec · Feestmodus';
         streetButton.hidden=!enabled; status.hidden=!enabled;
+        status.textContent = `${mobile ? 14 : 36} extra feestvierders · vuurwerk · feestmuziek · Sterrenstraat`;
         document.body.dataset.party=enabled?'on':'off';
         if(!enabled)audio.update(false);
     }
@@ -164,7 +169,7 @@ export function createPartyMode({ scene, navigation, sound, onStreet, date = new
             if(cycle>=0&&cycle!==burstCycles[i]){if(burstCycles[i]!==-1||elapsed<2){audio.burst((i-2.5)/4);bursts++;}burstCycles[i]=cycle;}
         }
     }
-    return {setEnabled,update,isChristmasDay,get enabled(){return enabled;},getState:()=>({enabled,calendarEnabled,extraGuests:enabled?36:0,dancing:enabled?life.getState().dancing:0,
-        blockedGuests:enabled?life.getState().blocked:0,positions:enabled?life.getState().positions:[],bulbs:enabled?bulbCount:0,fireworkParticles:enabled?816:0,
+    return {setEnabled,update,isChristmasDay,get enabled(){return enabled;},getState:()=>({enabled,calendarEnabled,extraGuests:enabled?(mobile?14:36):0,dancing:enabled?life.getState().dancing:0,
+        blockedGuests:enabled?life.getState().blocked:0,positions:enabled?life.getState().positions:[],bulbs:enabled?bulbCount:0,fireworkParticles:enabled?6*sparksPerBurst:0,
         bursts,reducedMotion:reduced.matches,audible:!!audio.voice,musicReady:!!audio.buffer,musicDuration:audio.buffer?.duration||0,street:'Sterrenstraat'})};
 }

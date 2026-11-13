@@ -8,7 +8,7 @@ import { createStorybookDetails } from './storybook-details.js';
 
 // The village is built in metres. Static details are merged by material so that
 // thousands of shingles, lights and branches don't become thousands of draws.
-export function createVillage({ scene, camera, controls, renderer, onExplore, onOverview }) {
+export function createVillage({ scene, camera, controls, renderer, onExplore, onOverview, mobile = false }) {
     const root = new THREE.Group();
     root.name = 'Het winterdorp';
     scene.add(root);
@@ -33,8 +33,8 @@ export function createVillage({ scene, camera, controls, renderer, onExplore, on
     const warm = mat(0xffce89, .3, 0, { emissive: 0xffa344, emissiveIntensity: 1.8 });
     const bulbs = [warm, mat(0xf06357, .3, 0, { emissive: 0xf03528, emissiveIntensity: 2.1 }), mat(0x83efcb, .3, 0, { emissive: 0x40dca0, emissiveIntensity: 1.8 })];
     const boxGeo = new THREE.BoxGeometry(1, 1, 1);
-    const sphereGeo = new THREE.SphereGeometry(1, 12, 8);
-    const coneGeo = new THREE.ConeGeometry(1, 1, 12);
+    const sphereGeo = new THREE.SphereGeometry(1, mobile ? 7 : 12, mobile ? 5 : 8);
+    const coneGeo = new THREE.ConeGeometry(1, 1, mobile ? 8 : 12);
     const matrix = new THREE.Matrix4();
     const quat = new THREE.Quaternion();
     function add(geo, material, x, y, z, sx = 1, sy = 1, sz = 1, rx = 0, ry = 0, rz = 0, parent = null) {
@@ -62,9 +62,10 @@ export function createVillage({ scene, camera, controls, renderer, onExplore, on
         g.dispose();
     }
     function lightString(a, b, count = 28, sag = 1.2) {
+        const steps = mobile ? Math.max(6, Math.ceil(count * 0.45)) : count;
         let previous = a;
-        for (let i = 1; i <= count; i++) {
-            const f = i / count;
+        for (let i = 1; i <= steps; i++) {
+            const f = i / steps;
             const p = a.map((v, j) => THREE.MathUtils.lerp(v, b[j], f) - (j === 1 ? Math.sin(f * Math.PI) * sag : 0));
             beam(previous, p, .025, iron);
             ball(bulbs[i % 6 === 0 ? 1 : i % 5 === 0 ? 2 : 0], p[0], p[1] - .13, p[2], .095);
@@ -105,26 +106,34 @@ export function createVillage({ scene, camera, controls, renderer, onExplore, on
     const contactMaterial = new THREE.MeshBasicMaterial({ map: new THREE.CanvasTexture(shadowCanvas), transparent: true, depthWrite: false, polygonOffset: true, polygonOffsetFactor: -1 });
     const contactGeometry = new THREE.PlaneGeometry(1, 1);
     function contactShadow(x, z, w, d, y = .065) { add(contactGeometry, contactMaterial, x, y, z, w, d, 1, -Math.PI / 2); }
-    const terrain = createWinterLandscape({ bumpMap: grain }); root.add(terrain);
-    const magic = createWinterMagic(); root.add(magic.group);
+    const terrain = createWinterLandscape({ bumpMap: grain, segments: mobile ? 88 : 224 }); root.add(terrain);
+    const magic = createWinterMagic({ count: mobile ? 60 : 155 }); root.add(magic.group);
 
-    function tree(x, z, h, decorated = false) {
-        const conifer = createConifer({ height: h, seed: Math.round((x + 200) * 133 + (z + 200) * 17), decorated });
+    function tree(x, z, h, decorated = false, treeCastShadow = true) {
+        const conifer = createConifer({
+            height: h,
+            seed: Math.round((x + 200) * 133 + (z + 200) * 17),
+            decorated,
+            mobile,
+            castShadow: treeCastShadow
+        });
         conifer.position.set(x, snowHeight(x, z), z); root.add(conifer); trees.push(conifer);
         contactShadow(x, z, h * .8, h * .8, snowHeight(x, z) + .018);
         colliders.push({ type: 'tree', x, z, radius: conifer.userData.collisionRadius });
         return conifer;
     }
-    for (let i = 0; i < 96; i++) {
+    const outerTreeCount = mobile ? 36 : 96;
+    for (let i = 0; i < outerTreeCount; i++) {
         const angle = random() * Math.PI * 2, radius = 92 + random() * 35;
-        tree(Math.sin(angle) * radius, Math.cos(angle) * radius, 6 + random() * 8);
+        tree(Math.sin(angle) * radius, Math.cos(angle) * radius, 6 + random() * 8, false, !mobile);
     }
     tree(-20, 18, 10, true);
 
     function wreath(x, y, z, r = .55) {
-        const geo = new THREE.TorusGeometry(r, .14, 6, 20);
+        const geo = new THREE.TorusGeometry(r, .14, mobile ? 4 : 6, mobile ? 10 : 20);
         add(geo, pine, x, y, z); geo.dispose();
-        for (let i = 0; i < 9; i++) { const a = i / 9 * Math.PI * 2; ball(i % 2 ? gold : red, x + Math.sin(a) * r, y + Math.cos(a) * r, z + .12, .08); }
+        const dotCount = mobile ? 5 : 9;
+        for (let i = 0; i < dotCount; i++) { const a = i / dotCount * Math.PI * 2; ball(i % 2 ? gold : red, x + Math.sin(a) * r, y + Math.cos(a) * r, z + .12, .08); }
         box(red, x - .13, y - r, z + .18, .26, .17, .12, -.4);
         box(red, x + .13, y - r, z + .18, .26, .17, .12, .4);
     }
@@ -165,7 +174,7 @@ export function createVillage({ scene, camera, controls, renderer, onExplore, on
         chimneys.push([chimneyX, chimneyTop + .3, chimneyZ]);
         box(stone, x, .25, z, w + .5, .7, d + .5);
         box(facade, x, h / 2 + .5, z, w, h, d);
-        for (let y = .8; y < h + .4; y += .3) box(wood, x, y, z + d / 2 + .018, w, .025, .04);
+        if (!mobile) for (let y = .8; y < h + .4; y += .3) box(wood, x, y, z + d / 2 + .018, w, .025, .04);
         const front = z + d / 2;
         for (const side of [-1, 1]) {
             box(darkWood, x + side * (w / 2 - .12), h / 2 + .5, front + .1, .2, h, .2);
@@ -178,8 +187,9 @@ export function createVillage({ scene, camera, controls, renderer, onExplore, on
             box(roofMaterial, centreX, centreY, roofZ, roofLength, .24, d + overhang * 2, roofAngle);
             box(snow, centreX - Math.sin(roofAngle) * .17, centreY + Math.cos(roofAngle) * .17, roofZ,
                 roofLength + .05, .15, d + overhang * 2 + .09, roofAngle);
-            for (let k = 0; k < 17; k++) {
-                const zz = roofZ - d / 2 + k * d / 16;
+            const icicleCount = mobile ? 5 : 17;
+            for (let k = 0; k < icicleCount; k++) {
+                const zz = roofZ - d / 2 + k * d / (icicleCount - 1);
                 const length = .12 + houseRandom() * .43;
                 add(coneGeo, matIce, x + edgeX, roofBase - length / 2, zz, .04, length, .04, Math.PI);
             }
@@ -193,7 +203,7 @@ export function createVillage({ scene, camera, controls, renderer, onExplore, on
                 box(shutter, wx, 1.15, front + .2, 1.16, .2, .35);
                 for (const shutterSide of [-1, 1]) {
                     box(shutter, wx + shutterSide * .69, 2.12, front + .2, .28, 1.45, .12);
-                    for (let slat = 0; slat < 8; slat++) box(wood, wx + shutterSide * .69, 1.53 + slat * .16, front + .29, .29, .028, .05);
+                    if (!mobile) for (let slat = 0; slat < 8; slat++) box(wood, wx + shutterSide * .69, 1.53 + slat * .16, front + .29, .29, .028, .05);
                 }
             }
         }
@@ -213,7 +223,7 @@ export function createVillage({ scene, camera, controls, renderer, onExplore, on
         const doorShape = new THREE.Shape();
         doorShape.moveTo(-.58, 0); doorShape.lineTo(.58, 0); doorShape.lineTo(.58, 1.65);
         doorShape.quadraticCurveTo(.58, 2.4, 0, 2.4); doorShape.quadraticCurveTo(-.58, 2.4, -.58, 1.65); doorShape.closePath();
-        const doorGeometry = new THREE.ExtrudeGeometry(doorShape, { depth: .12, bevelEnabled: true, bevelSize: .025, bevelThickness: .025, bevelSegments: 1, curveSegments: 12 });
+        const doorGeometry = new THREE.ExtrudeGeometry(doorShape, { depth: .12, bevelEnabled: true, bevelSize: .025, bevelThickness: .025, bevelSegments: 1, curveSegments: mobile ? 6 : 12 });
         add(doorGeometry, shutter, x, .35, front + .13); doorGeometry.dispose();
         add(sphereGeo, warm, x, 2.12, front + .29, .24, .32, .055);
         box(gold, x, 2.12, front + .37, .035, .6, .035);
@@ -233,7 +243,7 @@ export function createVillage({ scene, camera, controls, renderer, onExplore, on
             }
         } else {
             const atticX = x + ridgeOffset * .45, atticY = h + .6 + roofRise * .43;
-            const ringGeometry = new THREE.TorusGeometry(.37, .07, 6, 20);
+            const ringGeometry = new THREE.TorusGeometry(.37, .07, mobile ? 4 : 6, mobile ? 10 : 20);
             add(ringGeometry, gold, atticX, atticY, front + .09); ringGeometry.dispose();
             add(sphereGeo, warm, atticX, atticY, front + .07, .32, .32, .055);
             box(wood, atticX, atticY, front + .15, .045, .68, .055);
@@ -249,21 +259,27 @@ export function createVillage({ scene, camera, controls, renderer, onExplore, on
             lightString([x - .88, 3.12, front + 1.55], [x + .88, 3.12, front + 1.55], 9, .18);
         }
         box(stone, chimneyX, chimneyY, chimneyZ, .8, chimneyHeight, .8);
-        for (let i = 0; i < 9; i++) box(darkWood, chimneyX, chimneyY - chimneyHeight / 2 + i * chimneyHeight / 9, chimneyZ + .415, .81, .035, .035);
+        if (!mobile) for (let i = 0; i < 9; i++) box(darkWood, chimneyX, chimneyY - chimneyHeight / 2 + i * chimneyHeight / 9, chimneyZ + .415, .81, .035, .035);
         box(gold, chimneyX, chimneyTop - .1, chimneyZ, 1.0, .13, 1.0);
         box(snow, chimneyX, chimneyTop + .06, chimneyZ, 1.06, .16, 1.06);
         label(name, x, h - .22, front + .34, grand ? 5.5 : Math.min(3.3, w * .55));
         lightString([x - w / 2 - .25, leftEdgeY, front + overhang + .08], [x + w / 2 + .25, rightEdgeY, front + overhang + .08], 22, .45);
         for (let k = 0; k < 3; k++) box(snow, x, .16 + k * .12, front + .6 + (2 - k) * .45, 1.9, .24, .65);
         for (const side of [-1, 1]) {
-            for (let zz = z - d / 2 + .12; zz < z + d / 2; zz += .22) box(wood, x + side * (w / 2 + .025), Math.min(2.05, h / 2 + .5), zz, .05, Math.min(2.95, h - .2), .03);
+            if (!mobile) for (let zz = z - d / 2 + .12; zz < z + d / 2; zz += .22) box(wood, x + side * (w / 2 + .025), Math.min(2.05, h / 2 + .5), zz, .05, Math.min(2.95, h - .2), .03);
             const edgeX = x + side * (w / 2 + overhang);
             beam([edgeX, roofBase - .02, roofZ - d / 2 - overhang], [edgeX, roofBase - .02, roofZ + d / 2 + overhang], .035, iron);
-            for (let j = 0; j < 8; j++) add(sphereGeo, snow, edgeX, roofBase + .11, roofZ - d / 2 + j * d / 7, .24, .08 + houseRandom() * .06, .42);
+            const edgeSnowCount = mobile ? 4 : 8;
+            for (let j = 0; j < edgeSnowCount; j++) add(sphereGeo, snow, edgeX, roofBase + .11, roofZ - d / 2 + j * d / (edgeSnowCount - 1), .24, .08 + houseRandom() * .06, .42);
         }
-        for (let xx = x - w / 2; xx < x + w / 2; xx += .55) {
-            box(stone, xx, .2, front + .13, .5, .22, .16);
-            box(darkWood, xx + .22, .42, front + .13, .5, .035, .17);
+        if (mobile) {
+            box(stone, x, .2, front + .13, w, .22, .16);
+            box(darkWood, x, .42, front + .13, w, .035, .17);
+        } else {
+            for (let xx = x - w / 2; xx < x + w / 2; xx += .55) {
+                box(stone, xx, .2, front + .13, .5, .22, .16);
+                box(darkWood, xx + .22, .42, front + .13, .5, .035, .17);
+            }
         }
         if (grand) {
             for (const dx of [-w / 2 - 1.5, w / 2 + 1.5]) tree(x + dx, front + 1, 4, true);
@@ -298,14 +314,43 @@ export function createVillage({ scene, camera, controls, renderer, onExplore, on
             box(gold, x + (j % 2) * .4, .36 + size / 2, z, .08, size + .03, size + .03);
         }
     }
-    // Broad, softly reflective cobblestone streets with individual inset pavers.
-    const roadMat = mat(0x657481, .48, .05);
+    // Broad, softly reflective cobblestone streets with individual inset pavers (desktop)
+    // or a tiled procedural cobblestone CanvasTexture (mobile) to avoid thousands of paver boxes.
+    let roadMat;
+    if (mobile) {
+        const cc = document.createElement('canvas'); cc.width = cc.height = 128;
+        const cctx = cc.getContext('2d'); cctx.fillStyle = '#53626f'; cctx.fillRect(0, 0, 128, 128);
+        const rows = 4, cols = 4, cw = 128 / cols, ch = 128 / rows;
+        for (let r = 0; r < rows; r++) {
+            const shift = (r % 2) * (cw * .5);
+            for (let c = -1; c <= cols; c++) {
+                const shade = Math.floor(96 + ((r * 7 + (c + 2) * 13) % 5) * 7);
+                cctx.fillStyle = `rgb(${shade - 6},${shade},${shade + 9})`;
+                cctx.fillRect(c * cw + shift + 2, r * ch + 2, cw - 4, ch - 4);
+            }
+        }
+        const cobbleTex = new THREE.CanvasTexture(cc);
+        cobbleTex.colorSpace = THREE.SRGBColorSpace; cobbleTex.wrapS = cobbleTex.wrapT = THREE.RepeatWrapping;
+        roadMat = new THREE.MeshStandardMaterial({ color: 0xe6eef4, map: cobbleTex, roughness: .52, metalness: .05 });
+    } else {
+        roadMat = mat(0x657481, .48, .05);
+    }
     function road(x, z, w, d) {
         roads.push({ x, z, w: w / 2, d: d / 2 });
-        box(roadMat, x, -.12, z, w, .2, d);
-        for (let zz = z - d / 2 + .4; zz < z + d / 2; zz += .8) {
-            for (let xx = x - w / 2 + .4; xx < x + w / 2; xx += .9) {
-                box(stone, xx, .005 + random() * .025, zz, .82, .08, .71);
+        if (mobile) {
+            const g = boxGeo.toNonIndexed();
+            const pos = g.attributes.position, norm = g.attributes.normal, uv = g.attributes.uv;
+            for (let i = 0; i < pos.count; i++) {
+                if (Math.abs(norm.getY(i)) > .5) uv.setXY(i, (pos.getX(i) * w + x) * .28, (pos.getZ(i) * d + z) * .28);
+                else uv.setXY(i, uv.getX(i) * .28, uv.getY(i) * .28);
+            }
+            add(g, roadMat, x, -.06, z, w, .2, d); g.dispose();
+        } else {
+            box(roadMat, x, -.12, z, w, .2, d);
+            for (let zz = z - d / 2 + .4; zz < z + d / 2; zz += .8) {
+                for (let xx = x - w / 2 + .4; xx < x + w / 2; xx += .9) {
+                    box(stone, xx, .005 + random() * .025, zz, .82, .08, .71);
+                }
             }
         }
         for (const side of [-1, 1]) box(snow, x + side * (w / 2 + .12), .1, z, .32, .24, d);
@@ -322,10 +367,14 @@ export function createVillage({ scene, camera, controls, renderer, onExplore, on
     for (const z of [5, 20, 35]) road(-28, z + 4.6, 13, 2.4);
     road(-28, -17.5, 13, 3);
     road(30, 0, 7, 8); road(9, 3, 44, 4);
-    const plaza = new THREE.CylinderGeometry(8, 8.3, .24, 64);
+    const plaza = new THREE.CylinderGeometry(8, 8.3, .24, mobile ? 28 : 64);
+    if (mobile) {
+        const pos = plaza.attributes.position, uv = plaza.attributes.uv;
+        for (let i = 0; i < pos.count; i++) uv.setXY(i, pos.getX(i) * .28, pos.getZ(i) * .28);
+    }
     add(plaza, roadMat, -20, -.02, 18); plaza.dispose();
     // Tree basin, benches, candy-cane bollards and lanterns.
-    const ring = new THREE.TorusGeometry(2.8, .18, 8, 48);
+    const ring = new THREE.TorusGeometry(2.8, .18, mobile ? 5 : 8, mobile ? 20 : 48);
     add(ring, snow, -20, .1, 18, 1, 1, 1, Math.PI / 2); ring.dispose();
     for (const x of [-26.5, -13.5]) {
         box(wood, x, .7, 18, .9, .18, 2.8);
@@ -344,7 +393,7 @@ export function createVillage({ scene, camera, controls, renderer, onExplore, on
         wreath(x, 3.6, z + .18, .35);
         // A transparent warm pool gives every lantern contact with the snow
         // without adding an expensive shadow-casting light for every bulb.
-        const pool = new THREE.Mesh(new THREE.CircleGeometry(2.2, 24), poolMat);
+        const pool = new THREE.Mesh(new THREE.CircleGeometry(2.2, mobile ? 12 : 24), poolMat);
         pool.rotation.x = -Math.PI / 2; pool.position.set(x, .08, z); root.add(pool);
     }
     const poolCanvas = document.createElement('canvas'); poolCanvas.width = poolCanvas.height = 64;
@@ -471,10 +520,12 @@ export function createVillage({ scene, camera, controls, renderer, onExplore, on
         const mesh = new THREE.Mesh(merged, material); mesh.castShadow = !!material.emissive && material.emissive.getHex() === 0; mesh.receiveShadow = true; root.add(mesh);
         geometries.forEach(g => g.dispose());
     }
-    const storybookDetails = createStorybookDetails({ root, buildings });
+    const storybookDetails = createStorybookDetails({ root, buildings, mobile });
     // A few physically lit focal points supplement the emissive decorations.
-    for (const [x, y, z, intensity, distance] of [[-20, 6, 18, 18, 22], [-34, 3, -17, 35, 17], [30, 4, -5, 60, 24], [-32, 3, 24, 30, 16]]) {
-        const l = new THREE.PointLight(0xffba70, intensity, distance, 2); l.position.set(x, y, z); root.add(l);
+    if (!mobile) {
+        for (const [x, y, z, intensity, distance] of [[-20, 6, 18, 18, 22], [-34, 3, -17, 35, 17], [30, 4, -5, 60, 24], [-32, 3, 24, 30, 16]]) {
+            const l = new THREE.PointLight(0xffba70, intensity, distance, 2); l.position.set(x, y, z); root.add(l);
+        }
     }
 
     // A single soft particle draw brings the homes to life without per-house
@@ -521,7 +572,7 @@ export function createVillage({ scene, camera, controls, renderer, onExplore, on
         [[-42, 49], [0, 49], [40, 49]], [[45, -28], [45, 3], [45, 39]],
         [[-13, 25], [2, 25], [16, 25]], [[-20, 42], [0, 42], [30, 42]]
     ].map(path => path.flatMap((point, i) => i ? navigation.plan(path[i - 1], point).slice(1) : [point]));
-    const life = createVillageLife({ parent: root, paths: lifePaths, count: 48, isWalkable: navigation.isWalkable });
+    const life = createVillageLife({ parent: root, paths: lifePaths, count: mobile ? 20 : 48, isWalkable: navigation.isWalkable, mobile });
     function footHeight(x, z) {
         if (Math.hypot(x + 20, z - 18) < 8 || roads.some(r => Math.abs(x - r.x) <= r.w && Math.abs(z - r.z) <= r.d)) return .1;
         return snowHeight(x, z);
@@ -543,12 +594,26 @@ export function createVillage({ scene, camera, controls, renderer, onExplore, on
         } else { santa.scale.setScalar(1); flight.position.set(-12, .2, 25); flight.rotation.set(0, 0, 0); }
         if (next === 'santa') yaw = Math.PI;
         document.body.dataset.exploreMode = next;
-        document.querySelectorAll('[data-mode]').forEach(b => { const active = b.dataset.mode === next; b.setAttribute('aria-pressed', String(active)); });
+        document.querySelectorAll('[data-mode]').forEach(b => {
+            const active = b.dataset.mode === next;
+            b.setAttribute('aria-pressed', String(active));
+            if (active && mobile) b.scrollIntoView({ behavior: 'smooth', block: 'nearest', inline: 'center' });
+        });
         flightButton.textContent = next === 'fly' ? 'Terug naar plein' : 'Vlieg met de slee';
         tourButton.hidden = next !== 'walk';
         tourButton.textContent = tourPlaying ? 'Pauzeer wandeling' : 'Hervat wandeling';
         status.textContent = { overview: 'Het winterdorp · 90° N', walk: 'Te voet door het elfendorp', santa: 'Santa op het dorpsplein', fly: 'Santa’s kerstvlucht' }[next];
-        instructions.textContent = { overview: 'Sleep om rond te kijken · Scroll om in te zoomen', walk: 'Automatische rondleiding · WASD / pijltjes om zelf te lopen · Sleep om te kijken · Esc: overzicht', santa: 'W/S: lopen · A/D: draaien · Shift: rennen · Esc: overzicht', fly: 'W/S: snelheid · A/D: sturen · Spatie: stijgen · Shift: dalen · Esc: overzicht' }[next];
+        instructions.textContent = (mobile ? {
+            overview: 'Sleep om te draaien · Knijp om te zoomen · Tik op het cadeau',
+            walk: 'Sleep om rond te kijken · Gebruik de knoppen om te lopen',
+            santa: 'Gebruik de knoppen rechtsonder om met Santa te lopen',
+            fly: 'Stuur met de knoppen · Gebruik Stijg & Daal voor hoogte'
+        } : {
+            overview: 'Sleep om rond te kijken · Scroll om in te zoomen',
+            walk: 'Automatische rondleiding · WASD / pijltjes om zelf te lopen · Sleep om te kijken · Esc: overzicht',
+            santa: 'W/S: lopen · A/D: draaien · Shift: rennen · Esc: overzicht',
+            fly: 'W/S: snelheid · A/D: sturen · Spatie: stijgen · Shift: dalen · Esc: overzicht'
+        })[next];
         camera.fov = next === 'walk' ? 67 : next === 'fly' ? 58 : 46; camera.updateProjectionMatrix();
         renderer.shadowMap.needsUpdate = true;
     }
@@ -592,7 +657,7 @@ export function createVillage({ scene, camera, controls, renderer, onExplore, on
     const forward = new THREE.Vector3(), target = new THREE.Vector3(), desired = new THREE.Vector3();
     let lastShadowUpdate = 0;
     function update(dt, t) {
-        if (mode !== 'overview' && t - lastShadowUpdate > .25) { renderer.shadowMap.needsUpdate = true; lastShadowUpdate = t; }
+        if (mode !== 'overview' && t - lastShadowUpdate > (mobile ? .6 : .25)) { renderer.shadowMap.needsUpdate = true; lastShadowUpdate = t; }
         smokeTime.value = t;
         magic.update(t);
         storybookDetails.update(t);
@@ -649,5 +714,5 @@ export function createVillage({ scene, camera, controls, renderer, onExplore, on
             status.textContent = `Santa’s kerstvlucht · ${Math.round(altitude)} m · ${Math.round(velocity * 3.6)} km/u`;
         }
     }
-    return { update, setMode, navigation, route, trees, get mode() { return mode; }, getState: () => ({ mode, tourPlaying, santa: santa.getWorldPosition(new THREE.Vector3()).toArray(), flight: flight.position.toArray(), velocity, altitude, walker: walker.toArray(), buildings: buildings.length, elves: life.count, life: life.getState(), trees: trees.length, routeLength: route.length, routeClear, voxelPitch: .125, terrain: 'continuous-wind-drifts', architecture: buildings.map(b => ({ name: b.name, w: b.w, d: b.d, h: b.h, roof: b.roofPitch, style: b.style })), reindeer: deer.length }) };
+    return { update, setMode, navigation, route, trees, get mode() { return mode; }, getState: () => ({ mode, tourPlaying, santa: santa.getWorldPosition(new THREE.Vector3()).toArray(), flight: flight.position.toArray(), velocity, altitude, walker: walker.toArray(), buildings: buildings.length, elves: life.count, life: life.getState(), trees: trees.length, routeLength: route.length, routeClear, voxelPitch: mobile ? .5 : .125, terrain: 'continuous-wind-drifts', architecture: buildings.map(b => ({ name: b.name, w: b.w, d: b.d, h: b.h, roof: b.roofPitch, style: b.style })), reindeer: deer.length }) };
 }

@@ -3,7 +3,7 @@ import { mergeGeometries } from './vendor/three/examples/jsm/utils/BufferGeometr
 
 // A whole village of articulated characters in ten instanced draws. Facial
 // features, clothing, parcels and carts are geometry, rather than billboard art.
-export function createVillageLife({ parent, paths = [], count = 40, isWalkable = () => true, festive = false } = {}) {
+export function createVillageLife({ parent, paths = [], count = 40, isWalkable = () => true, festive = false, mobile = false } = {}) {
     if (!parent) throw new Error('createVillageLife needs a parent Group');
     const group = new THREE.Group(); group.name = 'Dorpsbewoners'; parent.add(group);
     const time = { value: 0 };
@@ -14,9 +14,9 @@ export function createVillageLife({ parent, paths = [], count = 40, isWalkable =
     const hairColors = [0x30221b, 0xf0d3a3, 0xb45d2a, 0xd9d1c8, 0x171a20];
     const palette = { cream: 0xf5e9d3, black: 0x182026, gold: 0xc99b51, wood: 0x684737, white: 0xfff8ed };
     const unitBox = new THREE.BoxGeometry(1, 1, 1);
-    const unitSphere = new THREE.SphereGeometry(1, 12, 8);
-    const cylinder = new THREE.CylinderGeometry(1, 1, 1, 10);
-    const cone = new THREE.ConeGeometry(1, 1, 16);
+    const unitSphere = new THREE.SphereGeometry(1, mobile ? 7 : 12, mobile ? 5 : 8);
+    const cylinder = new THREE.CylinderGeometry(1, 1, 1, mobile ? 6 : 10);
+    const cone = new THREE.ConeGeometry(1, 1, mobile ? 8 : 16);
     const color = new THREE.Color(), q = new THREE.Quaternion(), matrix = new THREE.Matrix4();
     const position = new THREE.Vector3(), scale = new THREE.Vector3();
     const variantCount = Math.min(10, count);
@@ -74,7 +74,7 @@ export function createVillageLife({ parent, paths = [], count = 40, isWalkable =
         }
         if (v % 4 === 0) {
             // Tiny round spectacles, with an actual bridge.
-            const frame = new THREE.TorusGeometry(.06, .009, 5, 14);
+            const frame = new THREE.TorusGeometry(.06, .009, mobile ? 3 : 5, mobile ? 8 : 14);
             for (const side of [-1, 1]) part(frame, palette.gold, side * .083, 1.55, .247, 1, 1, 1);
             box(palette.gold, 0, 1.55, .25, .045, .01, .01); frame.dispose();
         }
@@ -129,7 +129,7 @@ export function createVillageLife({ parent, paths = [], count = 40, isWalkable =
                 box(palette.wood, side * .52, .52, -1.05, .1, .42, 1.3);
                 box(palette.wood, side * .39, .65, -.35, .055, .055, .7);
                 for (const z of [-1.5, -.65]) {
-                    const wheel = new THREE.TorusGeometry(.19, .045, 6, 12);
+                    const wheel = new THREE.TorusGeometry(.19, .045, mobile ? 4 : 6, mobile ? 8 : 12);
                     part(wheel, palette.black, side * .58, .2, z, 1, 1, 1, 0, [0, 0, 0], 0, Math.PI / 2);
                     wheel.dispose();
                 }
@@ -209,7 +209,7 @@ export function createVillageLife({ parent, paths = [], count = 40, isWalkable =
     for (let v = 0; v < variantCount; v++) {
         const variant = makeVariant(v), n = Math.floor((count - 1 - v) / variantCount) + 1;
         const mesh = new THREE.InstancedMesh(variant.geometry, material, n);
-        mesh.name = `Elfen · ${variant.role} · ${v + 1}`; mesh.castShadow = true; mesh.receiveShadow = true;
+        mesh.name = `Elfen · ${variant.role} · ${v + 1}`; mesh.castShadow = !mobile; mesh.receiveShadow = true;
         mesh.customDepthMaterial = depthMaterial; mesh.frustumCulled = false; mesh.instanceMatrix.setUsage(THREE.DynamicDrawUsage);
         const activities = new Float32Array(n * 3);
         variant.geometry.setAttribute('lifeActivity', new THREE.InstancedBufferAttribute(activities, 3));

@@ -24,8 +24,8 @@ export function snowHeight(x, z) {
     return -.28 + (noise(x * .07, z * .07) - .5) * .11 + outskirts * (drift + wind);
 }
 
-export function createWinterLandscape({ bumpMap } = {}) {
-    const geometry = new THREE.PlaneGeometry(560, 560, 224, 224);
+export function createWinterLandscape({ bumpMap, segments = 224 } = {}) {
+    const geometry = new THREE.PlaneGeometry(560, 560, segments, segments);
     geometry.rotateX(-Math.PI / 2);
     const position = geometry.getAttribute('position'), colors = [];
     const color = new THREE.Color();
@@ -47,14 +47,14 @@ export function createWinterLandscape({ bumpMap } = {}) {
     return mesh;
 }
 
-export function createWinterMagic() {
+export function createWinterMagic({ count = 155 } = {}) {
     const group = new THREE.Group(); group.name = 'Sterrenglans tussen de huisjes';
     let seed = 901225;
     const random = () => { seed = (1664525 * seed + 1013904223) >>> 0; return seed / 4294967296; };
     const positions = [], phases = [], tints = [];
     // Soft local golden fireflies gather around the square and market. These
     // are distinct from white snowfall and stay out of the viewer's face.
-    for (let i = 0; i < 155; i++) {
+    for (let i = 0; i < count; i++) {
         const a = random() * Math.PI * 2, radius = 5 + random() * 35;
         positions.push(-13 + Math.cos(a) * radius, 1.2 + random() * 6, 16 + Math.sin(a) * radius * .65);
         phases.push(random() * Math.PI * 2);

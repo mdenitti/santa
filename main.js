@@ -39,18 +39,25 @@ const PALETTE = {
     AURORA_PURPLE:0xb06cff  // Noorderlicht violet
 };
 
+// URL parameters en apparaattype uitlezen
+const urlParams = new URLSearchParams(window.location.search);
+const MOBILE_PARAM = urlParams.get('mobile');
+const IS_MOBILE_UA = /Mobi|Android|iPhone|iPad|iPod/i.test(navigator.userAgent);
+const IS_COARSE_SMALL = window.matchMedia('(pointer: coarse)').matches && Math.min(window.innerWidth, window.innerHeight) <= 780;
+const IS_MOBILE = MOBILE_PARAM === '1' || (MOBILE_PARAM !== '0' && (IS_MOBILE_UA || window.innerWidth <= 820 || IS_COARSE_SMALL));
+document.body.dataset.device = IS_MOBILE ? 'mobile' : 'desktop';
+
 const CONFIG = {
     seed: 9000,
     voxelSize: 0.5,
-    shadowMapSize: 2048,
-    snowFlakesCount: 3500,
-    starCount: 2200,
-    qualityLevel: 'Hoog',
+    voxelDivisions: IS_MOBILE ? 1 : 4,
+    shadowMapSize: IS_MOBILE ? 512 : 2048,
+    snowFlakesCount: IS_MOBILE ? 900 : 3500,
+    starCount: IS_MOBILE ? 750 : 2200,
+    qualityLevel: IS_MOBILE ? 'Mobiel' : 'Hoog',
     dioramaRadiusVoxels: 42
 };
 
-// URL parameters uitlezen
-const urlParams = new URLSearchParams(window.location.search);
 const IS_DEBUG = urlParams.has('debug');
 const SKIP_INTRO = urlParams.get('intro') === '0';
 const FROZEN_T = urlParams.has('t') && Number.isFinite(Number(urlParams.get('t'))) ? Number(urlParams.get('t')) : null;
@@ -187,7 +194,7 @@ class VoxelBuilder {
         if (standardVoxels.length > 0) {
             group.add(meshMicroVoxels(standardVoxels, {
                 step, has: (x, y, z) => this.has(x, y, z), materialOptions,
-                divisions: 4
+                divisions: CONFIG.voxelDivisions
             }));
         }
 
@@ -283,7 +290,7 @@ let renderer;
 try {
     renderer = new THREE.WebGLRenderer({
         canvas,
-        antialias: true,
+        antialias: !IS_MOBILE,
         powerPreference: 'high-performance'
     });
 } catch (e) {
@@ -292,9 +299,10 @@ try {
 }
 
 renderer.setSize(window.innerWidth, window.innerHeight);
-renderer.setPixelRatio(Math.min(window.devicePixelRatio, 2));
+renderer.setPixelRatio(Math.min(window.devicePixelRatio || 1, IS_MOBILE ? 1.25 : 2));
+renderer.outputColorSpace = THREE.SRGBColorSpace;
 renderer.toneMapping = THREE.ACESFilmicToneMapping;
-renderer.toneMappingExposure = 0.85;
+renderer.toneMappingExposure = IS_MOBILE ? 0.92 : 0.85;
 
 renderer.shadowMap.enabled = true;
 renderer.shadowMap.type = THREE.PCFShadowMap;
@@ -329,30 +337,37 @@ function recordInteraction() {
     window.addEventListener(evt, recordInteraction, { passive: true });
 });
 
-// Postprocessing met UnrealBloomPass
-const composer = new EffectComposer(renderer);
-const renderPass = new RenderPass(scene, camera);
-composer.addPass(renderPass);
-const ambientPass = new SSAOPass(scene, camera, window.innerWidth / 2, window.innerHeight / 2, 16);
-ambientPass.kernelRadius = 1.6;
-ambientPass.minDistance = .001;
-ambientPass.maxDistance = .035;
-composer.addPass(ambientPass);
-const resizeAmbient = () => ambientPass.setSize(Math.ceil(window.innerWidth / 2), Math.ceil(window.innerHeight / 2));
-resizeAmbient();
-const spaceIntro = createSpaceIntro({ camera, renderPass, villageScene: scene });
+// Postprocessing met SSAO en UnrealBloom op desktop; op mobiel direct renderen voor hoge FPS
+let composer = null;
+let renderPass = null;
+let ambientPass = null;
+let bloomPass = null;
+const resizeAmbient = () => {
+    if (ambientPass) ambientPass.setSize(Math.ceil(window.innerWidth / 2), Math.ceil(window.innerHeight / 2));
+};
+
+if (!IS_MOBILE) {
+    composer = new EffectComposer(renderer);
+    renderPass = new RenderPass(scene, camera);
+    composer.addPass(renderPass);
+    ambientPass = new SSAOPass(scene, camera, window.innerWidth / 2, window.innerHeight / 2, 16);
+    ambientPass.kernelRadius = 1.6;
+    ambientPass.minDistance = .001;
+    ambientPass.maxDistance = .035;
+    composer.addPass(ambientPass);
+    resizeAmbient();
+    bloomPass = new UnrealBloomPass(
+        new THREE.Vector2(window.innerWidth, window.innerHeight),
+        0.45,
+        0.4,
+        1.2
+    );
+    composer.addPass(bloomPass);
+    composer.addPass(new OutputPass());
+}
+
+const spaceIntro = createSpaceIntro({ camera, renderPass, villageScene: scene, mobile: IS_MOBILE });
 window.__introDiagnostics = spaceIntro.diagnostics;
-
-const bloomPass = new UnrealBloomPass(
-    new THREE.Vector2(window.innerWidth, window.innerHeight),
-    0.45,
-    0.4,
-    1.2
-);
-composer.addPass(bloomPass);
-
-const outputPass = new OutputPass();
-composer.addPass(outputPass);
 
 /* ==========================================================================
    4. LICHT (HOOGSTENS 8 ECHTE LICHTEN)
@@ -393,15 +408,17 @@ function createLights(sceneRef, config) {
     fireplaceLight.position.set(8 * config.voxelSize, 4 * config.voxelSize, -18 * config.voxelSize);
     group.add(fireplaceLight);
 
-    // 5. Warm lichtval uit het linker voorraam op de sneeuw
-    const windowSpillLight = new THREE.PointLight(0xffa834, 2.6, 24);
-    windowSpillLight.position.set(14 * config.voxelSize, 2.0 * config.voxelSize, 3.5 * config.voxelSize);
-    group.add(windowSpillLight);
+    if (!IS_MOBILE) {
+        // 5. Warm lichtval uit het linker voorraam op de sneeuw
+        const windowSpillLight = new THREE.PointLight(0xffa834, 2.6, 24);
+        windowSpillLight.position.set(14 * config.voxelSize, 2.0 * config.voxelSize, 3.5 * config.voxelSize);
+        group.add(windowSpillLight);
 
-    // 6. Warm lichtval uit het rechter voorraam op de sneeuw
-    const windowSpillLight2 = new THREE.PointLight(0xffa834, 2.2, 22);
-    windowSpillLight2.position.set(33 * config.voxelSize, 2.0 * config.voxelSize, 3.5 * config.voxelSize);
-    group.add(windowSpillLight2);
+        // 6. Warm lichtval uit het rechter voorraam op de sneeuw
+        const windowSpillLight2 = new THREE.PointLight(0xffa834, 2.2, 22);
+        windowSpillLight2.position.set(33 * config.voxelSize, 2.0 * config.voxelSize, 3.5 * config.voxelSize);
+        group.add(windowSpillLight2);
+    }
 
     // 7. Zachte diffuse opwaartse sneeuw-bounce om schaduwen te verrijken
     const ambientBounce = new THREE.DirectionalLight(0x8ecae6, 0.24);
@@ -2250,6 +2267,7 @@ window.addEventListener('pointerdown', (e) => {
 });
 
 window.addEventListener('pointermove', (e) => {
+    if (e.pointerType === 'touch') return;
     pointer.x = (e.clientX / window.innerWidth) * 2 - 1;
     pointer.y = -(e.clientY / window.innerHeight) * 2 + 1;
 
@@ -2282,14 +2300,18 @@ window.addEventListener('pointermove', (e) => {
 
 window.addEventListener('pointerup', (e) => {
     if (village.mode !== 'overview') return;
-    if (e.target && (e.target.closest('#hud-controls') || e.target.closest('.interactive-ui') || e.target.tagName === 'BUTTON')) {
+    if (e.target && e.target.closest('a, button, #hud-controls, .interactive-ui, #assurio-consent-notice')) {
         return;
     }
     const dx = Math.abs(e.clientX - pointerDownPos.x);
     const dy = Math.abs(e.clientY - pointerDownPos.y);
+    const tapTolerance = e.pointerType === 'touch' ? 12 : 5;
 
-    // Strikte 5-pixel tolerantie: slepen met OrbitControls triggert nooit een klik
-    if (dx < 5 && dy < 5) {
+    // Strikte tolerantie: slepen met OrbitControls triggert nooit een klik
+    if (dx < tapTolerance && dy < tapTolerance) {
+        pointer.x = (e.clientX / window.innerWidth) * 2 - 1;
+        pointer.y = -(e.clientY / window.innerHeight) * 2 + 1;
+
         if (cameraState === 'intro' || frozenIntroActive) {
             skipIntro();
             return;
@@ -2315,9 +2337,9 @@ window.addEventListener('resize', () => {
     camera.aspect = window.innerWidth / window.innerHeight;
     camera.updateProjectionMatrix();
     renderer.setSize(window.innerWidth, window.innerHeight);
-    composer.setSize(window.innerWidth, window.innerHeight);
+    if (composer) composer.setSize(window.innerWidth, window.innerHeight);
     resizeAmbient();
-    bloomPass.resolution.set(window.innerWidth, window.innerHeight);
+    if (bloomPass) bloomPass.resolution.set(window.innerWidth, window.innerHeight);
     renderer.shadowMap.needsUpdate = true;
 });
 
@@ -2384,7 +2406,7 @@ window.seekIntro = seconds => {
 };
 window.getIntroTime = () => introTime;
 
-const village = createVillage({ scene, camera, controls, renderer,
+const village = createVillage({ scene, camera, controls, renderer, mobile: IS_MOBILE,
     onExplore() {
         skipIntro();
         controls.enabled = false;
@@ -2399,7 +2421,7 @@ const village = createVillage({ scene, camera, controls, renderer,
 });
 window.village = village;
 spaceIntro.configure({ sky, stars, aurora, snow });
-const party = createPartyMode({ scene, navigation: village.navigation, sound: soundManager,
+const party = createPartyMode({ scene, navigation: village.navigation, sound: soundManager, mobile: IS_MOBILE,
     onStreet() {
         village.setMode('overview');
         controls.autoRotate = false;
@@ -2529,10 +2551,7 @@ function animate(timestamp) {
     party.update(dt, t, cameraState === 'intro' || frozenIntroActive);
 
     renderer.info.reset();
-    // Keep contact shading local: orbital views use the same village,
-    // but their kilometre-scale depth range is unsuitable for SSAO.
-    ambientPass.enabled = spaceIntro.diagnostics.localAtmosphere > .85 && CONFIG.qualityLevel !== 'Laag';
-    composer.render();
+    renderFrame();
 
     const calls = renderer.info.render.calls;
     const triangles = renderer.info.render.triangles;
@@ -2547,12 +2566,25 @@ function animate(timestamp) {
             frameTimeCount = 0;
             lastQualityCheck = t;
 
-            // Indien gemiddelde frametijd boven 22 ms ligt: trap één niveau omlaag
-            if (avgMs > 22.0) {
+            // Indien gemiddelde frametijd boven drempel ligt: trap één niveau omlaag
+            if (IS_MOBILE && avgMs > 28.0) {
+                if (CONFIG.qualityLevel === 'Mobiel') {
+                    CONFIG.qualityLevel = 'Mobiel-Midden';
+                    renderer.setPixelRatio(Math.min(window.devicePixelRatio || 1, 0.95));
+                    const sm = snow.userData.mesh;
+                    if (sm) sm.geometry.setDrawRange(0, Math.floor(CONFIG.snowFlakesCount * 0.55));
+                } else if (CONFIG.qualityLevel === 'Mobiel-Midden') {
+                    CONFIG.qualityLevel = 'Mobiel-Laag';
+                    renderer.setPixelRatio(0.8);
+                    const sm = snow.userData.mesh;
+                    if (sm) sm.geometry.setDrawRange(0, Math.floor(CONFIG.snowFlakesCount * 0.3));
+                    renderer.shadowMap.enabled = false;
+                }
+            } else if (!IS_MOBILE && avgMs > 22.0) {
                 if (CONFIG.qualityLevel === 'Hoog') {
                     CONFIG.qualityLevel = 'Midden';
                     renderer.setPixelRatio(1.0);
-                    composer.setPixelRatio(1.0);
+                    if (composer) composer.setPixelRatio(1.0);
                     resizeAmbient();
                     const sm = snow.userData.mesh;
                     if (sm) sm.geometry.setDrawRange(0, Math.floor(CONFIG.snowFlakesCount * 0.65));
@@ -2561,7 +2593,7 @@ function animate(timestamp) {
                 } else if (CONFIG.qualityLevel === 'Midden') {
                     CONFIG.qualityLevel = 'Laag';
                     renderer.setPixelRatio(0.75);
-                    composer.setPixelRatio(0.75);
+                    if (composer) composer.setPixelRatio(0.75);
                     resizeAmbient();
                     const sm = snow.userData.mesh;
                     if (sm) sm.geometry.setDrawRange(0, Math.floor(CONFIG.snowFlakesCount * 0.35));
@@ -2592,6 +2624,16 @@ function animate(timestamp) {
     }
 }
 
+function renderFrame() {
+    if (ambientPass) {
+        // Keep contact shading local: orbital views use the same village,
+        // but their kilometre-scale depth range is unsuitable for SSAO.
+        ambientPass.enabled = spaceIntro.diagnostics.localAtmosphere > .85 && CONFIG.qualityLevel !== 'Laag';
+    }
+    if (composer) composer.render();
+    else renderer.render(scene, camera);
+}
+
 // Shaders vooraf compileren en fade-in na voltooien
 async function init() {
     soundManager.init();
@@ -2608,9 +2650,8 @@ async function init() {
         applyIntro(frozenIntroActive ? frozenIntroTime : 0);
         await renderer.compileAsync(scene, camera);
     }
-    ambientPass.enabled = spaceIntro.diagnostics.localAtmosphere > .85 && CONFIG.qualityLevel !== 'Laag';
     renderer.shadowMap.needsUpdate = true;
-    composer.render();
+    renderFrame();
     document.getElementById('fade-overlay').style.opacity = '0';
     timer.reset();
     renderer.setAnimationLoop(animate);

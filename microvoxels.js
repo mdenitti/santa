@@ -20,9 +20,17 @@ export function meshMicroVoxels(cells, { step, has, materialOptions = {}, divisi
             for (let i = 0; i < divisions; i++) for (let j = 0; j < divisions; j++) {
                 // Side/corner occlusion is sampled from the original occupancy.
                 let occlusion = 0;
-                for (const axis of [u, v]) {
-                    const side = axis === u ? (i < divisions / 2 ? -1 : 1) : (j < divisions / 2 ? -1 : 1);
-                    if (has(cell.x + n[0] + axis[0] * side, cell.y + n[1] + axis[1] * side, cell.z + n[2] + axis[2] * side)) occlusion++;
+                if (divisions === 1) {
+                    for (const axis of [u, v]) {
+                        for (const side of [-1, 1]) {
+                            if (has(cell.x + n[0] + axis[0] * side, cell.y + n[1] + axis[1] * side, cell.z + n[2] + axis[2] * side)) occlusion += 0.5;
+                        }
+                    }
+                } else {
+                    for (const axis of [u, v]) {
+                        const side = axis === u ? (i < divisions / 2 ? -1 : 1) : (j < divisions / 2 ? -1 : 1);
+                        if (has(cell.x + n[0] + axis[0] * side, cell.y + n[1] + axis[1] * side, cell.z + n[2] + axis[2] * side)) occlusion++;
+                    }
                 }
                 const noise = Math.sin(cell.x * 71.3 + cell.y * 29.8 + cell.z * 131.1 + i * 5.1 + j * 7.7) * .018;
                 color.setHex(cell.colorHex).multiplyScalar((1 - occlusion * .13) * (n[1] < 0 ? .71 : n[1] === 0 ? .9 : 1) + noise);
