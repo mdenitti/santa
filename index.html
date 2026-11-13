@@ -202,6 +202,10 @@
         #village-heading h2 { font:italic 42px Georgia,serif; margin-top:10px; font-weight:normal; }
         #village-heading h2 span { display:inline-block; font:12px Georgia,serif; vertical-align:top; margin:8px 0 0 12px; color:#e1bb7c; }
         #village-heading p { font:italic 15px Georgia,serif; color:#c1d0d9; margin-top:8px; }
+        .assurio-badge { display:inline-flex; align-items:center; gap:10px; margin-top:12px; padding:6px 12px 6px 10px; border-radius:10px; background:rgba(11,23,40,0.62); border:1px solid rgba(230,199,145,0.22); backdrop-filter:blur(8px); -webkit-backdrop-filter:blur(8px); text-decoration:none; pointer-events:auto; transition:border-color 0.25s ease, background 0.25s ease, transform 0.25s ease; }
+        .assurio-badge:hover { background:rgba(17,43,48,0.82); border-color:rgba(169,225,83,0.55); transform:translateY(-1px); }
+        .assurio-powered { font-size:9px; letter-spacing:0.18em; text-transform:uppercase; color:#e1bb7c; white-space:nowrap; }
+        .assurio-badge img { height:34px; width:auto; display:block; }
         #explore-panel { position:absolute; bottom:24px; left:24px; max-width:calc(100% - 48px); padding:17px 20px; border:1px solid #e6c79138; border-radius:16px; background:linear-gradient(120deg,#112b30ed,#0b1728ed); backdrop-filter:blur(18px); box-shadow:0 8px 40px #0004; }
         .explore-topline { display:flex; align-items:center; gap:9px; font:15px Georgia,serif; color:#f6e3c2; margin-bottom:12px; }
         .live-dot { width:6px; height:6px; border-radius:50%; background:#a8dfbd; box-shadow:0 0 10px #a8dfbd99; }
@@ -225,7 +229,10 @@
         @media (max-width:650px) {
             #village-heading { top:24px; left:20px; } #village-heading h2 { font-size:30px; }
             .eyebrow { font-size:8px; letter-spacing:.13em; } #village-heading p { font-size:12px; }
-            #hud-controls { top:120px; right:14px; max-width:95%; }
+            .assurio-badge { margin-top:8px; padding:4px 9px; gap:7px; }
+            .assurio-badge img { height:26px; }
+            .assurio-powered { font-size:8px; }
+            #hud-controls { top:154px; right:14px; max-width:95%; }
             #explore-panel { left:12px; bottom:12px; max-width:calc(100% - 24px); padding:13px; }
             #explore-panel .btn { padding:10px 9px; font-size:11px; } #explore-instructions { font-size:10px; }
             #debug-overlay { top:180px; }
@@ -266,6 +273,10 @@
             <span class="eyebrow">EEN KERSTAVOND AAN DE NOORDPOOL</span>
             <h2>Het winterdorp<span>90° N</span></h2>
             <p>Waar het licht nooit uitgaat.</p>
+            <a class="assurio-badge" href="https://assurio.be/" target="_blank" rel="noopener" aria-label="Powered by Assurio">
+                <span class="assurio-powered">Powered by</span>
+                <img src="./assets/logo-tagline-dark.png" alt="Assurio - Problem solving in a digital world" width="142" height="42">
+            </a>
         </div>
         <div id="explore-panel" class="interactive-ui" aria-label="Verken het winterdorp">
             <div class="explore-topline"><span class="live-dot"></span><span id="explore-status" role="status">Het winterdorp · 90° N</span></div>
