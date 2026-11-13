@@ -202,10 +202,40 @@
         #village-heading h2 { font:italic 42px Georgia,serif; margin-top:10px; font-weight:normal; }
         #village-heading h2 span { display:inline-block; font:12px Georgia,serif; vertical-align:top; margin:8px 0 0 12px; color:#e1bb7c; }
         #village-heading p { font:italic 15px Georgia,serif; color:#c1d0d9; margin-top:8px; }
-        .assurio-badge { display:inline-flex; align-items:center; gap:10px; margin-top:12px; padding:6px 12px 6px 10px; border-radius:10px; background:rgba(11,23,40,0.62); border:1px solid rgba(230,199,145,0.22); backdrop-filter:blur(8px); -webkit-backdrop-filter:blur(8px); text-decoration:none; pointer-events:auto; transition:border-color 0.25s ease, background 0.25s ease, transform 0.25s ease; }
-        .assurio-badge:hover { background:rgba(17,43,48,0.82); border-color:rgba(169,225,83,0.55); transform:translateY(-1px); }
-        .assurio-powered { font-size:9px; letter-spacing:0.18em; text-transform:uppercase; color:#e1bb7c; white-space:nowrap; }
-        .assurio-badge img { height:34px; width:auto; display:block; }
+        .assurio-badge { position:relative; display:inline-flex; align-items:center; gap:10px; margin-top:12px; padding:7px 14px 7px 11px; border-radius:10px; background:rgba(11,23,40,0.62); border:1px solid rgba(230,199,145,0.26); backdrop-filter:blur(8px); -webkit-backdrop-filter:blur(8px); text-decoration:none; pointer-events:auto; transition:border-color 0.25s ease, background 0.25s ease, transform 0.25s ease, box-shadow 0.25s ease; }
+        body:not([data-intro-stage="orbit"]) .assurio-badge { animation:assurioMagicIn 1.4s cubic-bezier(0.22, 1, 0.36, 1) 0.25s both; }
+        .assurio-badge:hover { background:rgba(17,43,48,0.84); border-color:rgba(169,225,83,0.65); box-shadow:0 0 20px rgba(169,225,83,0.28), 0 0 12px rgba(255,230,163,0.2); transform:translateY(-1px); }
+        .assurio-powered { position:relative; z-index:1; font-size:9px; letter-spacing:0.18em; text-transform:uppercase; color:#e1bb7c; white-space:nowrap; }
+        .assurio-badge img { height:30px; width:auto; display:block; position:relative; z-index:1; }
+        .assurio-shimmer { position:absolute; inset:0; overflow:hidden; border-radius:inherit; pointer-events:none; }
+        .assurio-shimmer::after { content:''; position:absolute; top:-40%; left:-65%; width:42%; height:180%; background:linear-gradient(105deg, transparent 0%, rgba(255,230,163,0.08) 38%, rgba(255,248,220,0.34) 50%, rgba(169,225,83,0.14) 62%, transparent 100%); transform:rotate(14deg); }
+        body:not([data-intro-stage="orbit"]) .assurio-shimmer::after { animation:assurioSweep 4.5s ease-in-out 0.6s infinite; }
+        .assurio-sparkle { position:absolute; pointer-events:none; z-index:2; line-height:1; opacity:0; text-shadow:0 0 8px currentColor; }
+        body:not([data-intro-stage="orbit"]) .assurio-sparkle { animation:assurioTwinkle 3.2s ease-in-out infinite; }
+        .assurio-badge:hover .assurio-sparkle { animation-duration:1.5s; }
+        .assurio-sparkle.s1 { top:-7px; left:14%; font-size:12px; color:#ffe6a3; animation-delay:0.25s; }
+        .assurio-sparkle.s2 { top:-5px; right:18%; font-size:9px; color:#ffffff; animation-delay:0.75s; }
+        .assurio-sparkle.s3 { bottom:-6px; left:36%; font-size:10px; color:#a9e153; animation-delay:1.15s; }
+        .assurio-sparkle.s4 { top:22%; right:-7px; font-size:11px; color:#ffe6a3; animation-delay:0.45s; }
+        .assurio-sparkle.s5 { bottom:-5px; right:8%; font-size:8px; color:#ffffff; animation-delay:1.6s; }
+        .assurio-sparkle.s6 { top:18%; left:-7px; font-size:10px; color:#a9e153; animation-delay:2.05s; }
+        @keyframes assurioMagicIn {
+            0% { opacity:0; transform:translateY(10px) scale(0.9); filter:brightness(1.8) drop-shadow(0 0 18px rgba(255,228,158,0.85)); }
+            60% { opacity:1; transform:translateY(-1px) scale(1.02); filter:brightness(1.15) drop-shadow(0 0 14px rgba(169,225,83,0.42)); }
+            100% { opacity:1; transform:translateY(0) scale(1); filter:brightness(1) drop-shadow(0 0 8px rgba(169,225,83,0.18)); }
+        }
+        @keyframes assurioSweep {
+            0%, 12% { left:-65%; opacity:0; }
+            22% { opacity:1; }
+            42% { left:135%; opacity:0; }
+            100% { left:135%; opacity:0; }
+        }
+        @keyframes assurioTwinkle {
+            0%, 100% { opacity:0.15; transform:scale(0.55) rotate(0deg); }
+            35% { opacity:1; transform:scale(1.2) rotate(24deg); }
+            55% { opacity:0.85; transform:scale(0.95) rotate(45deg); }
+            75% { opacity:0.35; transform:scale(0.7) rotate(68deg); }
+        }
         #explore-panel { position:absolute; bottom:24px; left:24px; max-width:calc(100% - 48px); padding:17px 20px; border:1px solid #e6c79138; border-radius:16px; background:linear-gradient(120deg,#112b30ed,#0b1728ed); backdrop-filter:blur(18px); box-shadow:0 8px 40px #0004; }
         .explore-topline { display:flex; align-items:center; gap:9px; font:15px Georgia,serif; color:#f6e3c2; margin-bottom:12px; }
         .live-dot { width:6px; height:6px; border-radius:50%; background:#a8dfbd; box-shadow:0 0 10px #a8dfbd99; }
@@ -229,8 +259,8 @@
         @media (max-width:650px) {
             #village-heading { top:24px; left:20px; } #village-heading h2 { font-size:30px; }
             .eyebrow { font-size:8px; letter-spacing:.13em; } #village-heading p { font-size:12px; }
-            .assurio-badge { margin-top:8px; padding:4px 9px; gap:7px; }
-            .assurio-badge img { height:26px; }
+            .assurio-badge { margin-top:8px; padding:5px 10px; gap:7px; }
+            .assurio-badge img { height:23px; }
             .assurio-powered { font-size:8px; }
             #hud-controls { top:154px; right:14px; max-width:95%; }
             #explore-panel { left:12px; bottom:12px; max-width:calc(100% - 24px); padding:13px; }
@@ -274,8 +304,15 @@
             <h2>Het winterdorp<span>90° N</span></h2>
             <p>Waar het licht nooit uitgaat.</p>
             <a class="assurio-badge" href="https://assurio.be/" target="_blank" rel="noopener" aria-label="Powered by Assurio">
+                <span class="assurio-shimmer" aria-hidden="true"></span>
+                <span class="assurio-sparkle s1" aria-hidden="true">✦</span>
+                <span class="assurio-sparkle s2" aria-hidden="true">✦</span>
+                <span class="assurio-sparkle s3" aria-hidden="true">✦</span>
+                <span class="assurio-sparkle s4" aria-hidden="true">✦</span>
+                <span class="assurio-sparkle s5" aria-hidden="true">✦</span>
+                <span class="assurio-sparkle s6" aria-hidden="true">✦</span>
                 <span class="assurio-powered">Powered by</span>
-                <img src="./assets/logo-tagline-dark.png" alt="Assurio - Problem solving in a digital world" width="142" height="42">
+                <img src="./assets/logo-tagline-dark.png" alt="Assurio" width="110" height="30">
             </a>
         </div>
         <div id="explore-panel" class="interactive-ui" aria-label="Verken het winterdorp">
